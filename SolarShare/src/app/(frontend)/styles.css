@@ -1,0 +1,428 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Sans:wdth,wght@75..100,400..700&display=swap');
+@import "tailwindcss";
+
+:root {
+  --font-size: 16px;
+
+  /* SolarShare light interface */
+  --background: #F7F8FA;
+  --foreground: #071426;
+  --card: #FFFFFF;
+  --card-foreground: #071426;
+  --popover: #FFFFFF;
+  --popover-foreground: #071426;
+  --primary: #FF8A24;
+  --primary-foreground: #071426;
+  --secondary: #EEF2F6;
+  --secondary-foreground: #52606D;
+  --muted: #EEF2F6;
+  --muted-foreground: #66717A;
+  --accent: #2589FF;
+  --accent-foreground: #F4F7FC;
+  --destructive: #FF5D67;
+  --destructive-foreground: #ffffff;
+  --border: #E2E8F0;
+  --input: #D8E0E8;
+  --input-background: #FFFFFF;
+  --switch-background: #CBD5E1;
+  --ring: #43B5FF;
+  --radius: 0.875rem;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --chart-1: #FF8A24;
+  --chart-2: #2589FF;
+  --chart-3: #21D6A1;
+  --chart-4: #43B5FF;
+  --chart-5: #FF5D67;
+  --sidebar: #08172A;
+  --sidebar-foreground: #F4F7FC;
+  --sidebar-primary: #2589FF;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #102641;
+  --sidebar-accent-foreground: #F4F7FC;
+  --sidebar-border: #213A57;
+  --sidebar-ring: #43B5FF;
+  --sidebar-shadow: 2px 0 18px rgba(0,0,0,0.28);
+
+  /* AutoFix public pages — light mode */
+  --af-bg: #f7f8fa;
+  --af-surface: #ffffff;
+  --af-surface-alt: #eef0f3;
+  --af-text: #111827;
+  --af-text-sub: #4b5563;
+  --af-text-muted: #9ca3af;
+  --af-border: #e5e7eb;
+  --af-border-em: #d1d5db;
+  --af-nav-bg: rgba(247,248,250,0.96);
+  --af-input-bg: #f3f4f6;
+  --af-input-border: #e5e7eb;
+
+  /* WelcomePage luxury vars — light mode */
+  --wp-bg: #f5f2ee;
+  --wp-text: #0a0908;
+  --wp-text-sub: rgba(10,9,8,0.6);
+  --wp-text-dim: rgba(10,9,8,0.5);
+  --wp-text-muted: rgba(10,9,8,0.35);
+  --wp-text-faint: rgba(10,9,8,0.2);
+  --wp-border: rgba(0,0,0,0.09);
+  --wp-nav-scrolled: rgba(245,242,238,0.96);
+  --wp-panel-gap: rgba(0,0,0,0.07);
+  --wp-menu-bg: rgba(245,242,238,0.98);
+  --wp-split-gradient: linear-gradient(to right, transparent 60%, #f5f2ee 100%);
+}
+
+.dark {
+  /* SolarShare dark interface */
+  --background: #071426;
+  --foreground: #F4F7FC;
+  --card: #0B1D35;
+  --card-foreground: #F4F7FC;
+  --popover: #102641;
+  --popover-foreground: #F4F7FC;
+  --primary: #FF8A24;
+  --primary-foreground: #071426;
+  --secondary: #102641;
+  --secondary-foreground: #9BB0C9;
+  --muted: #102641;
+  --muted-foreground: #9BB0C9;
+  --accent: #2589FF;
+  --accent-foreground: #F4F7FC;
+  --destructive: #FF5D67;
+  --destructive-foreground: #ffffff;
+  --border: #213A57;
+  --input: #213A57;
+  --input-background: #0B1D35;
+  --switch-background: #334B66;
+  --ring: #43B5FF;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --chart-1: #f97316;
+  --chart-2: #60a5fa;
+  --chart-3: #34d399;
+  --chart-4: #a78bfa;
+  --chart-5: #f87171;
+  --sidebar: #0c0f16;
+  --sidebar-foreground: #e8eaf0;
+  --sidebar-primary: #f97316;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1e2433;
+  --sidebar-accent-foreground: #94a3b8;
+  --sidebar-border: rgba(255,255,255,0.07);
+  --sidebar-ring: #f97316;
+  --sidebar-shadow: 2px 0 16px rgba(0,0,0,0.4);
+
+  /* AutoFix public pages — dark mode */
+  --af-bg: #0a0a0a;
+  --af-surface: #111111;
+  --af-surface-alt: #0d0d0d;
+  --af-text: #ffffff;
+  --af-text-sub: rgba(255,255,255,0.65);
+  --af-text-muted: rgba(255,255,255,0.38);
+  --af-border: rgba(255,255,255,0.08);
+  --af-border-em: rgba(255,255,255,0.18);
+  --af-nav-bg: rgba(10,10,10,0.92);
+  --af-input-bg: #111111;
+  --af-input-border: rgba(255,255,255,0.1);
+
+  /* WelcomePage luxury vars — dark mode */
+  --wp-bg: #080808;
+  --wp-text: #ffffff;
+  --wp-text-sub: rgba(255,255,255,0.55);
+  --wp-text-dim: rgba(255,255,255,0.45);
+  --wp-text-muted: rgba(255,255,255,0.3);
+  --wp-text-faint: rgba(255,255,255,0.2);
+  --wp-border: rgba(255,255,255,0.07);
+  --wp-nav-scrolled: rgba(8,8,8,0.95);
+  --wp-panel-gap: rgba(255,255,255,0.06);
+  --wp-menu-bg: rgba(8,8,8,0.97);
+  --wp-split-gradient: linear-gradient(to right, transparent 60%, #080808 100%);
+}
+
+body {
+  font-family: "Instrument Sans", sans-serif;
+  transition: background-color 240ms ease, color 240ms ease;
+}
+
+html {
+  position: relative;
+  scroll-behavior: smooth;
+  background: var(--background);
+}
+
+.site-shell,
+.auth-shell,
+.app-shell,
+.site-shell section,
+.site-shell footer,
+.auth-shell > div,
+.app-shell header,
+.app-shell main,
+.app-shell section,
+.app-shell button,
+.app-shell select {
+  transition: background-color 240ms ease, border-color 240ms ease, color 240ms ease;
+}
+
+.dark .site-shell {
+  background: #071426;
+  color: #F4F7FC;
+}
+
+.dark .site-shell [class~="bg-[#F6F5F1]"],
+.dark .site-shell [class~="bg-[#ECEDE9]"],
+.dark .site-shell [class~="bg-white"] {
+  background-color: #0B1D35;
+}
+
+.dark .site-shell [class~="bg-[#ECEDE9]"] {
+  background-color: #102641;
+}
+
+.dark .site-shell [class~="text-[#071426]"],
+.dark .site-shell [class~="hover:text-[#071426]"]:hover {
+  color: #F4F7FC;
+}
+
+.dark .site-shell [class~="text-[#52606D]"],
+.dark .site-shell [class~="text-[#5F6B74]"],
+.dark .site-shell [class~="text-[#66717A]"],
+.dark .site-shell [class~="text-[#7A858E]"],
+.dark .site-shell [class~="text-[#8A939B]"] {
+  color: #9BB0C9;
+}
+
+.dark .site-shell [class~="border-[#071426]/15"],
+.dark .site-shell [class~="border-[#071426]/20"] {
+  border-color: rgba(244, 247, 252, 0.14);
+}
+
+.dark .site-shell [class~="bg-blue-50"],
+.dark .site-shell [class~="hover:bg-blue-50"]:hover {
+  background-color: rgba(37, 137, 255, 0.1);
+}
+
+.dark .site-shell [class~="bg-emerald-50"] {
+  background-color: rgba(33, 214, 161, 0.1);
+}
+
+.dark .site-shell [class~="bg-red-50"] {
+  background-color: rgba(255, 93, 103, 0.1);
+}
+
+.dark .auth-shell {
+  background-color: #071426;
+  color: #F4F7FC;
+}
+
+html:not(.dark) .auth-shell {
+  background-color: #F7F8FA;
+  color: #071426;
+}
+
+html:not(.dark) .auth-shell .auth-visual {
+  background-color: #071426;
+  color: #F4F7FC;
+}
+
+html:not(.dark) .auth-shell [class~="bg-[#0B1D35]"] {
+  background-color: #FFFFFF;
+}
+
+html:not(.dark) .auth-shell [class~="text-white"] {
+  color: #071426;
+}
+
+html:not(.dark) .auth-shell .auth-visual [class~="text-white"],
+html:not(.dark) .auth-shell .auth-visual {
+  color: #F4F7FC;
+}
+
+html:not(.dark) .auth-shell [class~="border-white/10"] {
+  border-color: #D8E0E8;
+}
+
+html:not(.dark) .auth-shell .auth-visual [class~="border-white/10"] {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .app-shell,
+.dark .app-shell [class~="bg-[#F4F6F8]"] {
+  background-color: #071426;
+  color: #F4F7FC;
+}
+
+.dark .app-shell [class~="bg-white"],
+.dark .app-shell [class~="bg-white/95"] {
+  background-color: #0B1D35;
+}
+
+.dark .app-shell [class~="bg-slate-50"],
+.dark .app-shell [class~="hover:bg-slate-50"]:hover,
+.dark .app-shell [class~="bg-slate-100"] {
+  background-color: #102641;
+}
+
+.dark .app-shell [class~="text-[#071426]"],
+.dark .app-shell [class~="hover:text-[#071426]"]:hover {
+  color: #F4F7FC;
+}
+
+.dark .app-shell [class~="text-slate-600"],
+.dark .app-shell [class~="text-slate-500"],
+.dark .app-shell [class~="text-slate-400"] {
+  color: #9BB0C9;
+}
+
+.dark .app-shell [class~="border-slate-100"],
+.dark .app-shell [class~="border-slate-200"],
+.dark .app-shell [class~="border-slate-300"] {
+  border-color: #213A57;
+}
+
+.dark .app-shell select,
+.dark .app-shell input,
+.dark .theme-toggle:not([class~="text-white"]) {
+  background-color: #102641;
+  border-color: #213A57;
+  color: #F4F7FC;
+}
+
+.dark .app-shell [class~="bg-orange-50"] {
+  background-color: rgba(255, 138, 36, 0.1);
+}
+
+.dark .app-shell [class~="bg-emerald-50"] {
+  background-color: rgba(33, 214, 161, 0.1);
+}
+
+.dark .app-shell [class~="bg-blue-50"] {
+  background-color: rgba(37, 137, 255, 0.1);
+}
+
+::selection {
+  background: rgba(255, 138, 36, 0.32);
+  color: #F4F7FC;
+}
+
+.font-mono {
+  font-family: "DM Mono", monospace;
+}
+
+@keyframes dash {
+  to { stroke-dashoffset: -590; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  /**
+  * Default typography styles for HTML elements (h1-h4, p, label, button, input).
+  * These are in @layer base, so Tailwind utility classes (like text-sm, text-lg) automatically override them.
+  */
+
+  html {
+    font-size: var(--font-size);
+  }
+
+  h1 {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  h2 {
+    font-size: var(--text-xl);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  h3 {
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  h4 {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  label {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  button {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  input {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-normal);
+    line-height: 1.5;
+  }
+}
+
+.figma-custom-code-fragment { display: contents; }
+.figma-bypass-link { position: fixed; top: 8px; left: 8px; z-index: 2147483647; transform: translateY(-150%); border-radius: 6px; background: #111827; color: #fff; padding: 8px 12px; font: 600 14px/1.2 system-ui, sans-serif; text-decoration: none; }
+.figma-bypass-link:focus { transform: translateY(0); }

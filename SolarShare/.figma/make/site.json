@@ -1,0 +1,11 @@
+{
+  "title": "SolarShare",
+  "description": "Manage vehicle diagnostics, mechanic assignments, parts inventory, and customer updates efficiently for auto repair shops to streamline service tracking.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

@@ -1,0 +1,102 @@
+import type { CollectionConfig } from 'payload'
+import {
+  assignOwner,
+  assignSolarRegistrationCode,
+  ownOwnerDocument,
+  solarOwnerOnly,
+} from '@/lib/access'
+
+export const SolarSystems: CollectionConfig = {
+  slug: 'solar-systems',
+  admin: { hidden: true },
+  access: {
+    create: solarOwnerOnly,
+    read: ownOwnerDocument,
+    update: ownOwnerDocument,
+    delete: ownOwnerDocument,
+  },
+  hooks: { beforeChange: [assignOwner, assignSolarRegistrationCode] },
+  fields: [
+    {
+      name: 'owner',
+      type: 'relationship',
+      relationTo: 'users',
+      required: true,
+      index: true,
+      access: { create: () => false, update: () => false },
+    },
+    { name: 'name', type: 'text', required: true },
+    { name: 'siteReference', type: 'text' },
+    { name: 'customerRegistrationCode', type: 'text', unique: true, index: true },
+    { name: 'allocatableEnergyKWh', type: 'number', required: true, defaultValue: 0, min: 0, access: { create: () => false, update: () => false } },
+    { name: 'inventoryVersion', type: 'number', required: true, defaultValue: 0, min: 0, access: { create: () => false, update: () => false } },
+    { name: 'locationLabel', type: 'text' },
+    { name: 'capacityKW', type: 'number', min: 0 },
+    { name: 'inverterModel', type: 'text' },
+    { name: 'panelModel', type: 'text' },
+    { name: 'inverterSerial', type: 'text' },
+    { name: 'gatewayReference', type: 'text', index: true },
+    {
+      name: 'integrationAdapter',
+      type: 'select',
+      defaultValue: 'not-configured',
+      index: true,
+      options: ['not-configured', 'generic-signed-webhook'],
+    },
+    {
+      name: 'credentialStatus',
+      type: 'select',
+      defaultValue: 'not-configured',
+      options: ['not-configured', 'configured', 'expired', 'error'],
+      access: { create: () => false, update: () => false },
+    },
+    {
+      name: 'operationalStatus',
+      type: 'select',
+      index: true,
+      defaultValue: 'pending',
+      options: ['pending', 'connected', 'offline', 'maintenance', 'decommissioned'],
+      access: { update: () => false },
+    },
+    {
+      name: 'dataSource',
+      type: 'select',
+      defaultValue: 'not-configured',
+      options: ['not-configured', 'manual', 'gateway', 'utility', 'import'],
+    },
+    {
+      name: 'lastConnectedAt',
+      type: 'date',
+      index: true,
+      access: { create: () => false, update: () => false },
+    },
+    {
+      name: 'lastTelemetryAt',
+      type: 'date',
+      index: true,
+      access: { create: () => false, update: () => false },
+    },
+    {
+      name: 'lastTelemetryErrorAt',
+      type: 'date',
+      access: { create: () => false, update: () => false },
+    },
+    {
+      name: 'telemetryStaleAfterSeconds',
+      type: 'number',
+      min: 60,
+      max: 86400,
+      defaultValue: 900,
+    },
+    {
+      name: 'battery',
+      type: 'group',
+      fields: [
+        { name: 'model', type: 'text' },
+        { name: 'capacityKWh', type: 'number', min: 0 },
+        { name: 'healthPercent', type: 'number', min: 0, max: 100 },
+        { name: 'serialNumber', type: 'text' },
+      ],
+    },
+  ],
+}
