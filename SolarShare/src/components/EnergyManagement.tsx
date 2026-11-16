@@ -64,7 +64,9 @@ export default function EnergyManagement({
   const ownerRelationships = data.relationships.filter((item) => id(item.solarOwner) === user.id)
   const customerRelationships = data.relationships.filter((item) => id(item.customer) === user.id)
   const approved = customerRelationships.find((item) => item.status === 'approved')
-  const wallet = data.wallets.find((item) => id(item.relationship) === approved?.id)
+ const wallet = data.wallets.find(
+  (item) => approved && id(item.relationship) === String(approved.id),
+)
   const tariff = data.tariffs.find((item) => approved && id(item.system) === id(approved.system))
   const availablePackages = data.packages.filter(
     (item) => approved && item.active && id(item.system) === id(approved.system),
@@ -91,7 +93,9 @@ export default function EnergyManagement({
       .filter((allocation) => allocation.status === 'pending')
       .map((allocation) => id(allocation.payment)),
   )
-  const selectedPackage = availablePackages.find((item) => item.id === selectedPackageID)
+  const selectedPackage = availablePackages.find(
+  (item) => String(item.id) === selectedPackageID,
+)
   const checkoutAmountKobo = selectedPackage
     ? selectedPackage.amountKobo
     : Math.round(Number(amount) * 100)
@@ -147,7 +151,7 @@ export default function EnergyManagement({
                   'Awaiting allocation',
                   money(
                     confirmedOwnerPayments
-                      .filter((x) => awaitingOwnerPaymentIDs.has(x.id))
+                     .filter((x) => awaitingOwnerPaymentIDs.has(String(x.id)))
                       .reduce((sum, x) => sum + x.amountKobo, 0),
                   ),
                   Network,
@@ -177,7 +181,7 @@ export default function EnergyManagement({
             <section className="border border-slate-200 bg-white p-6">
               <h2 className="text-sm font-semibold">Installations & tariffs</h2>
               {data.systems.map((system) => {
-                const current = data.tariffs.find((x) => id(x.system) === system.id)
+                const current = data.tariffs.find((x) => id(x.system) === String(system.id))
                 return (
                   <form
                     key={system.id}
@@ -388,7 +392,9 @@ export default function EnergyManagement({
           <section className="mt-6 border border-slate-200 bg-white p-6">
             <h2 className="text-sm font-semibold">Allocation approvals</h2>
             {ownerAllocations.map((allocation) => {
-              const payment = ownerPayments.find((item) => id(allocation.payment) === item.id)
+             const payment = ownerPayments.find(
+  (item) => id(allocation.payment) === String(item.id),
+)
               return (
                 <div
                   key={allocation.id}
@@ -672,10 +678,10 @@ export default function EnergyManagement({
                             key={item.id}
                             type="button"
                             onClick={() => {
-                              setSelectedPackageID(item.id)
+                             setSelectedPackageID(String(item.id))
                               setAmount(String(item.amountKobo / 100))
                             }}
-                            className={`border p-4 text-left ${selectedPackageID === item.id ? 'border-[#1675DD] bg-blue-50' : 'border-slate-200'}`}
+                            className={`border p-4 text-left ${selectedPackageID === String(item.id) ? 'border-[#1675DD] bg-blue-50' : 'border-slate-200'}`}
                           >
                             <span className="block text-xs font-semibold">{item.name}</span>
                             <span className="mt-1 block font-mono text-sm">

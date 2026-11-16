@@ -92,10 +92,10 @@ describe('Paystack payment reconciliation', () => {
   })
 
   it('limits allocation review to the owning Solar Owner and pending requests', () => {
-    expect(canReviewAllocation('owner-1', 'owner-1', 'pending')).toBe(true)
-    expect(canReviewAllocation('owner-2', 'owner-1', 'pending')).toBe(false)
-    expect(canReviewAllocation('owner-1', 'owner-1', 'approved')).toBe(false)
-    expect(canReviewAllocation('owner-1', 'owner-1', 'rejected')).toBe(false)
+    expect(canReviewAllocation(1, 1, 'pending')).toBe(true)
+    expect(canReviewAllocation(2, 1, 'pending')).toBe(false)
+    expect(canReviewAllocation(1, 1, 'approved')).toBe(false)
+    expect(canReviewAllocation(1, 1, 'rejected')).toBe(false)
   })
 
   it('plans owner notification for confirmation and reversal without duplicate alerts', () => {

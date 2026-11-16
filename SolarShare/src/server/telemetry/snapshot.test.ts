@@ -5,18 +5,22 @@ import { classifyTelemetryReading, telemetryDedupeKey } from './normalization'
 import type { NormalizedTelemetryEvent } from './types'
 
 const system = {
-  id: 'system-1',
-  owner: 'user-1',
+  id: 1,
+  owner: 1,
   name: 'Home',
   operationalStatus: 'connected',
   telemetryStaleAfterSeconds: 900,
-} as SolarSystem
+  allocatableEnergyKWh: 0,
+  inventoryVersion: 0,
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+} as unknown as SolarSystem
 
 const reading = (overrides: Partial<EnergyRecord> = {}) =>
   ({
     id: crypto.randomUUID(),
-    owner: 'user-1',
-    system: 'system-1',
+    owner: 1,
+    system: 1,
     kind: 'generation',
     value: 4,
     unit: 'kW',

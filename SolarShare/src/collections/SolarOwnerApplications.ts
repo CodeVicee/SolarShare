@@ -9,14 +9,17 @@ const protectWorkflowFields: CollectionBeforeChangeHook = ({
   originalDoc,
   req,
 }) => {
-  if (operation === 'create') {
-    return {
-      ...data,
-      status: 'pending',
-      reviewedAt: undefined,
-      reviewedBy: undefined,
-    }
+ if (operation === 'create') {
+  const isTrustedOwnerRegistration =
+    req.context?.solarOwnerRegistration === true
+
+  return {
+    ...data,
+    status: isTrustedOwnerRegistration ? 'approved' : 'pending',
+    reviewedAt: undefined,
+    reviewedBy: undefined,
   }
+}
 
   if (data.status !== undefined && data.status !== originalDoc?.status) {
     if (!isPayloadAdmin(req.user)) throw new Error('Only administrators can review owner applications.')

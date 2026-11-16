@@ -1,8 +1,11 @@
+
 import path from 'path'
-import { buildFigmaConfig } from '@payloadcms/figma'
+import { buildConfig } from 'payload'
+import { postgresAdapter } from '@payloadcms/db-postgres'
 import { mcpPlugin } from '@payloadcms/plugin-mcp'
 import { en as adminLanguage } from '@payloadcms/translations/languages/en'
 import { fileURLToPath } from 'url'
+
 import { Admins } from './collections/Admins'
 import { Media } from './collections/Media'
 import { Folders } from './collections/Folders'
@@ -29,12 +32,33 @@ import { EnergyLedgerEntries } from './collections/EnergyLedgerEntries'
 import { MeterRegistrations } from './collections/MeterRegistrations'
 import { MeterReadings } from './collections/MeterReadings'
 import { ConsumptionRecords } from './collections/ConsumptionRecords'
+
 import { resendEmailAdapter } from './lib/resend-email'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
-export default buildFigmaConfig({
+const requiredEnv = (name: string): string => {
+  const value = process.env[name]
+
+  if (!value) {
+    throw new Error(`${name} is required. Check your .env file.`)
+  }
+
+  return value
+}
+
+export default buildConfig({
+  secret: requiredEnv('PAYLOAD_SECRET'),
+
+  db: postgresAdapter({
+    pool: {
+      connectionString: requiredEnv('DATABASE_URL'),
+    },
+    push: false,
+    disableCreateDatabase: true,
+  }),
+
   admin: {
     user: Admins.slug,
     constrainWidth: true,
@@ -49,10 +73,12 @@ export default buildFigmaConfig({
       baseDir: path.resolve(dirname),
     },
   },
+
   i18n: {
     fallbackLanguage: 'en',
     supportedLanguages: { en: adminLanguage },
   },
+
   collections: [
     Admins,
     Users,
@@ -81,15 +107,18 @@ export default buildFigmaConfig({
     Folders,
     Tags,
   ],
+
   email: resendEmailAdapter,
+
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
+
   localization: {
     locales: [{ code: 'en', label: 'English' }],
     fallback: true,
     defaultLocale: 'en',
   },
+
   plugins: [mcpPlugin({})],
-  figma: {},
 })

@@ -1,17 +1,56 @@
-import { redirect } from 'next/navigation'
-import type { NextRequest } from 'next/server'
 
-// Payload's default /admin/logout lands on /admin/login, which the Make
-// preview iframe auto-login re-authenticates. Route through our logout
-// endpoint (clears the session) and land on the site index instead.
-export function GET(request: NextRequest) {
-  // Next standalone constructs nextUrl from its internal listener. Gatekeeper
-  // rewrites Host to the viewer hostname before invoking the Lambda.
-  const host = request.headers.get('host')
-  const viewerOrigin = host ? `${request.nextUrl.protocol}//${host}` : undefined
-  const origin = process.env.FIGMA_PUBLIC_URL || viewerOrigin
-  const logoutRedirect = new URL('/', origin).toString()
+import { cookies, headers } from 'next/headers'
+import type { ServerAdapter } from 'payload'
+import { logout } from 'payload/auth'
+import config from '@payload-config'
 
-  // Logout is a collection endpoint, so its path uses the Admins collection slug.
-  redirect(`/api/admins/sso/logout?redirect=${encodeURIComponent(logoutRedirect)}`)
+export async function GET(request: Request) {
+  const cookieStore = await cookies()
+  const requestHeaders = await headers()
+
+  const serverAdapter: ServerAdapter = {
+    forbidden: () => {
+      throw new Error('Unexpected forbidden response during logout')
+    },
+
+    getCookies: () => ({
+      get: (name) => cookieStore.get(name) ?? undefined,
+      getAll: () =>
+        cookieStore.getAll().map(({ name, value }) => ({ name, value })),
+      set: (name, value, options) => {
+        cookieStore.set(name, value, options)
+      },
+    }),
+
+    getHeaders: () => requestHeaders,
+
+    notFound: () => {
+      throw new Error('Unexpected not-found response during logout')
+    },
+
+    permanentRedirect: (path) => {
+      throw new Error(`Unexpected permanent redirect: ${path}`)
+    },
+
+    redirect: (path) => {
+      throw new Error(`Unexpected redirect: ${path}`)
+    },
+
+    setCookie: (name, value, options) => {
+      cookieStore.set(name, value, options)
+    },
+
+    unauthorized: () => {
+      throw new Error('Unexpected unauthorized response during logout')
+    },
+  }
+
+  await logout({ config, serverAdapter })
+
+  const redirectURL = new URL(
+  '/',
+  process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+)
+
+return Response.redirect(redirectURL, 303)
 }

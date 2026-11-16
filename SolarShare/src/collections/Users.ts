@@ -3,6 +3,9 @@ import type { CollectionConfig } from 'payload'
 import { ownProfile } from '@/lib/access'
 import { getPasswordResetURL, getVerificationURL } from '@/lib/auth-email'
 
+const emailVerificationEnabled =
+  process.env.EMAIL_VERIFICATION_ENABLED !== 'false'
+
 export const Users: CollectionConfig = {
   slug: 'users',
   admin: {
@@ -14,7 +17,8 @@ export const Users: CollectionConfig = {
     lockTime: 15 * 60 * 1000,
     tokenExpiration: 7 * 24 * 60 * 60,
     useSessions: true,
-    verify: {
+   verify: emailVerificationEnabled
+  ? {
       generateEmailSubject: () => 'Verify your SolarShare account',
       generateEmailHTML: (args) => {
         const token = args?.token || ''
@@ -28,7 +32,8 @@ export const Users: CollectionConfig = {
           </div>
         `
       },
-    },
+    }
+  : false,
     forgotPassword: {
       expiration: 60 * 60 * 1000,
       minRequestInterval: 60 * 1000,

@@ -3,8 +3,9 @@ import { customerAccess, ownerOnlyAccess, ownerOrCustomerAccess } from './financ
 
 const args = (id: string, collection = 'users') =>
   ({
+    slug: 'users',
     req: { user: { id, collection } },
-  }) as Parameters<typeof ownerOrCustomerAccess>[0]
+  }) as unknown as Parameters<typeof ownerOrCustomerAccess>[0]
 
 describe('payment and allocation participant access', () => {
   it('scopes customers to their own records', () => {
@@ -25,7 +26,10 @@ describe('payment and allocation participant access', () => {
   it('does not grant app payment data to CMS identities or signed-out requests', () => {
     expect(ownerOrCustomerAccess(args('admin-1', 'admins'))).toBe(false)
     expect(
-      ownerOrCustomerAccess({ req: { user: null } } as Parameters<typeof ownerOrCustomerAccess>[0]),
+     ownerOrCustomerAccess({
+  slug: 'users',
+  req: { user: null },
+} as Parameters<typeof ownerOrCustomerAccess>[0])
     ).toBe(false)
   })
 })

@@ -154,7 +154,7 @@ export function buildTelemetrySnapshot(
   const today = now.toISOString().slice(0, 10)
   return {
     generatedAt: now.toISOString(),
-    systemID: system?.id,
+    systemID: system ? String(system.id) : undefined,
     systemName: system?.name,
     deviceStatus,
     lastSuccessfulUpdate,

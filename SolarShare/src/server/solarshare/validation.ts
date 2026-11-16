@@ -2,8 +2,28 @@ const text = (value: unknown, max = 160) =>
   typeof value === 'string' ? value.trim().slice(0, max) : ''
 
 const finiteNumber = (value: unknown) => {
+  const positiveDocumentID = (value: unknown): number | undefined => {
+  const parsed =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string' && value.trim() !== ''
+        ? Number(value)
+        : NaN
+
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : undefined
+}
   const parsed = typeof value === 'number' ? value : Number(value)
   return Number.isFinite(parsed) ? parsed : undefined
+}
+const positiveDocumentID = (value: unknown): number | undefined => {
+  const parsed =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string' && value.trim() !== ''
+        ? Number(value)
+        : NaN
+
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : undefined
 }
 
 export class InputError extends Error {
@@ -91,18 +111,18 @@ export function parseSharingInput(input: unknown) {
   const source = input && typeof input === 'object' ? input : {}
   const record = source as Record<string, unknown>
   const energyKWh = finiteNumber(record.energyKWh)
+
   const direction: 'received' | 'distributed' | undefined =
     record.direction === 'received' || record.direction === 'distributed'
       ? record.direction
       : undefined
-  const sourceSystem =
-    typeof record.sourceSystem === 'string'
-      ? record.sourceSystem
-      : undefined
+
+  const sourceSystem = positiveDocumentID(record.sourceSystem)
   const recipient =
-    typeof record.recipient === 'string'
-      ? record.recipient
-      : undefined
+    record.recipient === undefined || record.recipient === null || record.recipient === ''
+      ? undefined
+      : positiveDocumentID(record.recipient)
+
   const errors: Record<string, string> = {}
 
   if (!direction) errors.direction = 'Choose received or distributed.'
@@ -110,6 +130,10 @@ export function parseSharingInput(input: unknown) {
     errors.energyKWh = 'Energy quantity must be greater than zero.'
   }
   if (!sourceSystem) errors.sourceSystem = 'Select an owned solar system.'
+  if (record.recipient != null && record.recipient !== '' && !recipient) {
+    errors.recipient = 'Select a valid recipient.'
+  }
+
   if (Object.keys(errors).length) throw new InputError(errors)
 
   return {

@@ -60,18 +60,6 @@ export type SupportedTimezones =
   | 'Pacific/Noumea'
   | 'Pacific/Auckland'
   | 'Pacific/Fiji';
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "LexicalNodes_3DE324E4".
- */
-export type LexicalNodes_3DE324E4 =
-  | SerializedTextNode
-  | SerializedTabNode
-  | SerializedLineBreakNode
-  | SerializedParagraphNode<LexicalNodes_3DE324E4>
-  | SerializedListNode<LexicalNodes_3DE324E4>
-  | SerializedListItemNode<LexicalNodes_3DE324E4>
-  | SerializedHeadingNode<LexicalNodes_3DE324E4, 'h2' | 'h3' | 'h4'>;
 
 export interface Config {
   auth: {
@@ -147,7 +135,7 @@ export interface Config {
     'payload-llm-instructions': PayloadLlmInstructionsSelect<false> | PayloadLlmInstructionsSelect<true>;
   };
   db: {
-    defaultIDType: string;
+    defaultIDType: number;
   };
   fallbackLocale: ('false' | 'none' | 'null') | false | null | 'en' | 'en'[];
   globals: {};
@@ -207,32 +195,43 @@ export interface UserAuthOperations {
  * via the `definition` "admins".
  */
 export interface Admin {
-  id: string;
-  figmaHandle?: string | null;
-  figmaImageUrl?: string | null;
-  userGroups?: string[] | null;
-  makePermission?: ('view' | 'edit') | null;
-  email?: string | null;
+  id: number;
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  resetPasswordRequestedAt?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
   collection: 'admins';
 }
 /**
@@ -240,14 +239,14 @@ export interface Admin {
  * via the `definition` "users".
  */
 export interface User {
-  id: string;
+  id: number;
   firstName: string;
   lastName: string;
   phone: string;
   accountStatus: 'active' | 'suspended' | 'disabled';
   authProvider: 'payload-native';
   roles: ('solar-owner' | 'customer' | 'solar-owner-applicant')[];
-  avatar?: (string | null) | ProfileImage;
+  avatar?: (number | null) | ProfileImage;
   theme?: ('system' | 'light' | 'dark') | null;
   notificationPreferences?: {
     emailAlerts?: boolean | null;
@@ -260,20 +259,20 @@ export interface User {
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
@@ -283,8 +282,6 @@ export interface User {
   salt?: string | null;
   hash?: string | null;
   resetPasswordRequestedAt?: string | null;
-  _verified?: boolean | null;
-  _verificationToken?: string | null;
   loginAttempts?: number | null;
   lockUntil?: string | null;
   sessions?:
@@ -302,28 +299,26 @@ export interface User {
  * via the `definition` "profile-images".
  */
 export interface ProfileImage {
-  id: string;
+  id: number;
   alt: string;
-  owner: string | User;
-  prefix?: string | null;
-  _objectKey?: string | null;
+  owner: number | User;
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
@@ -352,8 +347,8 @@ export interface ProfileImage {
  * via the `definition` "solar-systems".
  */
 export interface SolarSystem {
-  id: string;
-  owner: string | User;
+  id: number;
+  owner: number | User;
   name: string;
   siteReference?: string | null;
   customerRegistrationCode?: string | null;
@@ -382,20 +377,20 @@ export interface SolarSystem {
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
@@ -405,9 +400,9 @@ export interface SolarSystem {
  * via the `definition` "energy-records".
  */
 export interface EnergyRecord {
-  id: string;
-  owner: string | User;
-  system: string | SolarSystem;
+  id: number;
+  owner: number | User;
+  system: number | SolarSystem;
   kind:
     | 'generation'
     | 'consumption'
@@ -428,20 +423,20 @@ export interface EnergyRecord {
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
@@ -451,13 +446,13 @@ export interface EnergyRecord {
  * via the `definition` "sharing-records".
  */
 export interface SharingRecord {
-  id: string;
-  owner: string | User;
+  id: number;
+  owner: number | User;
   direction: 'received' | 'distributed';
   energyKWh: number;
-  sender?: (string | null) | User;
-  recipient?: (string | null) | User;
-  sourceSystem?: (string | null) | SolarSystem;
+  sender?: (number | null) | User;
+  recipient?: (number | null) | User;
+  sourceSystem?: (number | null) | SolarSystem;
   counterpartyLabel?: string | null;
   status: 'proposed' | 'approved' | 'allocated' | 'completed' | 'cancelled' | 'failed';
   source: 'coordination' | 'meter-import' | 'utility-confirmed';
@@ -467,20 +462,20 @@ export interface SharingRecord {
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
@@ -490,8 +485,8 @@ export interface SharingRecord {
  * via the `definition` "app-notifications".
  */
 export interface AppNotification {
-  id: string;
-  owner: string | User;
+  id: number;
+  owner: number | User;
   type: 'system' | 'energy' | 'sharing' | 'security' | 'account';
   title: string;
   message: string;
@@ -500,20 +495,20 @@ export interface AppNotification {
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
@@ -523,9 +518,9 @@ export interface AppNotification {
  * via the `definition` "system-alerts".
  */
 export interface SystemAlert {
-  id: string;
-  owner: string | User;
-  system: string | SolarSystem;
+  id: number;
+  owner: number | User;
+  system: number | SolarSystem;
   severity: 'info' | 'warning' | 'critical';
   category: 'connection' | 'inverter' | 'battery' | 'metering' | 'generation' | 'safety' | 'other';
   description: string;
@@ -538,20 +533,20 @@ export interface SystemAlert {
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
@@ -561,9 +556,9 @@ export interface SystemAlert {
  * via the `definition` "telemetry-ingestion-events".
  */
 export interface TelemetryIngestionEvent {
-  id: string;
-  owner?: (string | null) | User;
-  system?: (string | null) | SolarSystem;
+  id: number;
+  owner?: (number | null) | User;
+  system?: (number | null) | SolarSystem;
   adapter: string;
   eventReferenceHash?: string | null;
   status: 'accepted' | 'partial' | 'duplicate' | 'rejected';
@@ -577,20 +572,20 @@ export interface TelemetryIngestionEvent {
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
@@ -602,8 +597,8 @@ export interface TelemetryIngestionEvent {
  * via the `definition` "solar-owner-applications".
  */
 export interface SolarOwnerApplication {
-  id: string;
-  user: string | User;
+  id: number;
+  user: number | User;
   applicantName: string;
   applicantEmail: string;
   applicantPhone: string;
@@ -617,24 +612,24 @@ export interface SolarOwnerApplication {
   status: 'pending' | 'approved' | 'rejected';
   reviewNotes?: string | null;
   reviewedAt?: string | null;
-  reviewedBy?: (string | null) | Admin;
+  reviewedBy?: (number | null) | Admin;
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
@@ -644,28 +639,28 @@ export interface SolarOwnerApplication {
  * via the `definition` "solar-owner-profiles".
  */
 export interface SolarOwnerProfile {
-  id: string;
-  solarOwner: string | User;
+  id: number;
+  solarOwner: number | User;
   displayName: string;
   publicDescription?: string | null;
   status: 'active' | 'suspended';
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
@@ -675,27 +670,27 @@ export interface SolarOwnerProfile {
  * via the `definition` "customer-profiles".
  */
 export interface CustomerProfile {
-  id: string;
-  customer: string | User;
+  id: number;
+  customer: number | User;
   displayName: string;
   status: 'active' | 'suspended';
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
@@ -705,10 +700,10 @@ export interface CustomerProfile {
  * via the `definition` "customer-relationships".
  */
 export interface CustomerRelationship {
-  id: string;
-  solarOwner: string | User;
-  customer: string | User;
-  system: string | SolarSystem;
+  id: number;
+  solarOwner: number | User;
+  customer: number | User;
+  system: number | SolarSystem;
   status: 'pending' | 'approved' | 'rejected' | 'suspended' | 'disconnected';
   requestedAt: string;
   reviewedAt?: string | null;
@@ -717,20 +712,20 @@ export interface CustomerRelationship {
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
@@ -740,9 +735,9 @@ export interface CustomerRelationship {
  * via the `definition` "energy-tariffs".
  */
 export interface EnergyTariff {
-  id: string;
-  solarOwner: string | User;
-  system: string | SolarSystem;
+  id: number;
+  solarOwner: number | User;
+  system: number | SolarSystem;
   nairaPerKWh: number;
   activeFrom: string;
   activeTo?: string | null;
@@ -750,20 +745,20 @@ export interface EnergyTariff {
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
@@ -773,9 +768,9 @@ export interface EnergyTariff {
  * via the `definition` "energy-purchase-packages".
  */
 export interface EnergyPurchasePackage {
-  id: string;
-  solarOwner: string | User;
-  system: string | SolarSystem;
+  id: number;
+  solarOwner: number | User;
+  system: number | SolarSystem;
   name: string;
   description?: string | null;
   amountKobo: number;
@@ -784,20 +779,20 @@ export interface EnergyPurchasePackage {
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
@@ -807,12 +802,12 @@ export interface EnergyPurchasePackage {
  * via the `definition` "payment-transactions".
  */
 export interface PaymentTransaction {
-  id: string;
-  customer: string | User;
-  solarOwner: string | User;
-  relationship: string | CustomerRelationship;
-  system: string | SolarSystem;
-  purchasePackage?: (string | null) | EnergyPurchasePackage;
+  id: number;
+  customer: number | User;
+  solarOwner: number | User;
+  relationship: number | CustomerRelationship;
+  system: number | SolarSystem;
+  purchasePackage?: (number | null) | EnergyPurchasePackage;
   provider: 'paystack';
   reference: string;
   providerReference?: string | null;
@@ -834,20 +829,20 @@ export interface PaymentTransaction {
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
@@ -857,12 +852,12 @@ export interface PaymentTransaction {
  * via the `definition` "energy-allocation-requests".
  */
 export interface EnergyAllocationRequest {
-  id: string;
-  payment: string | PaymentTransaction;
-  customer: string | User;
-  solarOwner: string | User;
-  relationship: string | CustomerRelationship;
-  system: string | SolarSystem;
+  id: number;
+  payment: number | PaymentTransaction;
+  customer: number | User;
+  solarOwner: number | User;
+  relationship: number | CustomerRelationship;
+  system: number | SolarSystem;
   requestedKWh: number;
   status: 'pending' | 'approved' | 'rejected' | 'refund-required' | 'refunded';
   requestedAt: string;
@@ -871,20 +866,20 @@ export interface EnergyAllocationRequest {
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
@@ -894,32 +889,32 @@ export interface EnergyAllocationRequest {
  * via the `definition` "energy-allocation-records".
  */
 export interface EnergyAllocationRecord {
-  id: string;
-  request: string | EnergyAllocationRequest;
-  payment: string | PaymentTransaction;
-  customer: string | User;
-  solarOwner: string | User;
-  system: string | SolarSystem;
+  id: number;
+  request: number | EnergyAllocationRequest;
+  payment: number | PaymentTransaction;
+  customer: number | User;
+  solarOwner: number | User;
+  system: number | SolarSystem;
   energyKWh: number;
   reference: string;
   approvedAt: string;
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
@@ -929,11 +924,11 @@ export interface EnergyAllocationRecord {
  * via the `definition` "energy-wallets".
  */
 export interface EnergyWallet {
-  id: string;
-  customer: string | User;
-  solarOwner: string | User;
-  relationship: string | CustomerRelationship;
-  system: string | SolarSystem;
+  id: number;
+  customer: number | User;
+  solarOwner: number | User;
+  relationship: number | CustomerRelationship;
+  system: number | SolarSystem;
   balanceKWh: number;
   totalAllocatedKWh: number;
   totalConsumedKWh: number;
@@ -942,20 +937,20 @@ export interface EnergyWallet {
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
@@ -965,36 +960,36 @@ export interface EnergyWallet {
  * via the `definition` "energy-ledger-entries".
  */
 export interface EnergyLedgerEntry {
-  id: string;
-  customer?: (string | null) | User;
-  solarOwner: string | User;
-  system: string | SolarSystem;
-  wallet?: (string | null) | EnergyWallet;
+  id: number;
+  customer?: (number | null) | User;
+  solarOwner: number | User;
+  system: number | SolarSystem;
+  wallet?: (number | null) | EnergyWallet;
   accountType: 'owner-inventory' | 'customer-wallet';
   direction: 'credit' | 'debit';
   energyKWh: number;
   balanceAfterKWh: number;
-  allocation?: (string | null) | EnergyAllocationRecord;
-  consumption?: (string | null) | ConsumptionRecord;
+  allocation?: (number | null) | EnergyAllocationRecord;
+  consumption?: (number | null) | ConsumptionRecord;
   idempotencyKey: string;
   recordedAt: string;
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
@@ -1004,33 +999,33 @@ export interface EnergyLedgerEntry {
  * via the `definition` "consumption-records".
  */
 export interface ConsumptionRecord {
-  id: string;
-  customer: string | User;
-  solarOwner: string | User;
-  system: string | SolarSystem;
-  wallet: string | EnergyWallet;
-  meter: string | MeterRegistration;
-  reading: string | MeterReading;
+  id: number;
+  customer: number | User;
+  solarOwner: number | User;
+  system: number | SolarSystem;
+  wallet: number | EnergyWallet;
+  meter: number | MeterRegistration;
+  reading: number | MeterReading;
   energyKWh: number;
   status: 'applied' | 'insufficient-credit' | 'rejected';
   recordedAt: string;
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
@@ -1040,11 +1035,11 @@ export interface ConsumptionRecord {
  * via the `definition` "meter-registrations".
  */
 export interface MeterRegistration {
-  id: string;
-  customer: string | User;
-  solarOwner: string | User;
-  relationship: string | CustomerRelationship;
-  system: string | SolarSystem;
+  id: number;
+  customer: number | User;
+  solarOwner: number | User;
+  relationship: number | CustomerRelationship;
+  system: number | SolarSystem;
   meterIdentifier: string;
   status: 'pending' | 'active' | 'suspended' | 'disconnected';
   source: 'not-configured' | 'smart-meter' | 'manual-audited';
@@ -1053,20 +1048,20 @@ export interface MeterRegistration {
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
@@ -1076,11 +1071,11 @@ export interface MeterRegistration {
  * via the `definition` "meter-readings".
  */
 export interface MeterReading {
-  id: string;
-  meter: string | MeterRegistration;
-  customer: string | User;
-  solarOwner: string | User;
-  system: string | SolarSystem;
+  id: number;
+  meter: number | MeterRegistration;
+  customer: number | User;
+  solarOwner: number | User;
+  system: number | SolarSystem;
   cumulativeKWh: number;
   measuredAt: string;
   source: 'smart-meter' | 'manual-audited';
@@ -1091,20 +1086,20 @@ export interface MeterReading {
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
@@ -1114,29 +1109,27 @@ export interface MeterReading {
  * via the `definition` "media".
  */
 export interface Media {
-  id: string;
+  id: number;
   alt: string;
-  _h_folders?: (string | null) | Folder;
-  _h_tags?: (string | Tag)[] | null;
-  prefix?: string | null;
-  _objectKey?: string | null;
+  _h_folders?: (number | null) | Folder;
+  _h_tags?: (number | Tag)[] | null;
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
@@ -1165,26 +1158,26 @@ export interface Media {
  * via the `definition` "folders".
  */
 export interface Folder {
-  id: string;
-  _h_folders?: (string | null) | Folder;
+  id: number;
+  _h_folders?: (number | null) | Folder;
   name: string;
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
@@ -1196,26 +1189,26 @@ export interface Folder {
  * via the `definition` "tags".
  */
 export interface Tag {
-  id: string;
-  _h_tags?: (string | null) | Tag;
+  id: number;
+  _h_tags?: (number | null) | Tag;
   name: string;
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
@@ -1227,7 +1220,7 @@ export interface Tag {
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
-  id: string;
+  id: number;
   key: string;
   data:
     | {
@@ -1244,121 +1237,121 @@ export interface PayloadKv {
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
-  id: string;
+  id: number;
   document?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null)
     | ({
         relationTo: 'profile-images';
-        value: string | ProfileImage;
+        value: number | ProfileImage;
       } | null)
     | ({
         relationTo: 'solar-systems';
-        value: string | SolarSystem;
+        value: number | SolarSystem;
       } | null)
     | ({
         relationTo: 'energy-records';
-        value: string | EnergyRecord;
+        value: number | EnergyRecord;
       } | null)
     | ({
         relationTo: 'sharing-records';
-        value: string | SharingRecord;
+        value: number | SharingRecord;
       } | null)
     | ({
         relationTo: 'app-notifications';
-        value: string | AppNotification;
+        value: number | AppNotification;
       } | null)
     | ({
         relationTo: 'system-alerts';
-        value: string | SystemAlert;
+        value: number | SystemAlert;
       } | null)
     | ({
         relationTo: 'telemetry-ingestion-events';
-        value: string | TelemetryIngestionEvent;
+        value: number | TelemetryIngestionEvent;
       } | null)
     | ({
         relationTo: 'solar-owner-applications';
-        value: string | SolarOwnerApplication;
+        value: number | SolarOwnerApplication;
       } | null)
     | ({
         relationTo: 'solar-owner-profiles';
-        value: string | SolarOwnerProfile;
+        value: number | SolarOwnerProfile;
       } | null)
     | ({
         relationTo: 'customer-profiles';
-        value: string | CustomerProfile;
+        value: number | CustomerProfile;
       } | null)
     | ({
         relationTo: 'customer-relationships';
-        value: string | CustomerRelationship;
+        value: number | CustomerRelationship;
       } | null)
     | ({
         relationTo: 'energy-tariffs';
-        value: string | EnergyTariff;
+        value: number | EnergyTariff;
       } | null)
     | ({
         relationTo: 'energy-purchase-packages';
-        value: string | EnergyPurchasePackage;
+        value: number | EnergyPurchasePackage;
       } | null)
     | ({
         relationTo: 'payment-transactions';
-        value: string | PaymentTransaction;
+        value: number | PaymentTransaction;
       } | null)
     | ({
         relationTo: 'energy-allocation-requests';
-        value: string | EnergyAllocationRequest;
+        value: number | EnergyAllocationRequest;
       } | null)
     | ({
         relationTo: 'energy-allocation-records';
-        value: string | EnergyAllocationRecord;
+        value: number | EnergyAllocationRecord;
       } | null)
     | ({
         relationTo: 'energy-wallets';
-        value: string | EnergyWallet;
+        value: number | EnergyWallet;
       } | null)
     | ({
         relationTo: 'energy-ledger-entries';
-        value: string | EnergyLedgerEntry;
+        value: number | EnergyLedgerEntry;
       } | null)
     | ({
         relationTo: 'meter-registrations';
-        value: string | MeterRegistration;
+        value: number | MeterRegistration;
       } | null)
     | ({
         relationTo: 'meter-readings';
-        value: string | MeterReading;
+        value: number | MeterReading;
       } | null)
     | ({
         relationTo: 'consumption-records';
-        value: string | ConsumptionRecord;
+        value: number | ConsumptionRecord;
       } | null)
     | ({
         relationTo: 'media';
-        value: string | Media;
+        value: number | Media;
       } | null)
     | ({
         relationTo: 'folders';
-        value: string | Folder;
+        value: number | Folder;
       } | null)
     | ({
         relationTo: 'tags';
-        value: string | Tag;
+        value: number | Tag;
       } | null);
   globalSlug?: string | null;
   user:
     | {
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       }
     | {
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       };
   updatedAt: string;
   createdAt: string;
@@ -1368,15 +1361,15 @@ export interface PayloadLockedDocument {
  * via the `definition` "payload-preferences".
  */
 export interface PayloadPreference {
-  id: string;
+  id: number;
   user:
     | {
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       }
     | {
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       };
   key?: string | null;
   value?:
@@ -1396,7 +1389,7 @@ export interface PayloadPreference {
  * via the `definition` "payload-migrations".
  */
 export interface PayloadMigration {
-  id: string;
+  id: number;
   name?: string | null;
   batch?: number | null;
   updatedAt: string;
@@ -1411,25 +1404,25 @@ export interface PayloadLlmInstruction {
   entitySlug: string;
   title?: string | null;
   entityType: 'collection' | 'global';
-  additionalInstructions?: LexicalRichText<LexicalNodes_3DE324E4> | null;
-  systemInstructions?: LexicalRichText<LexicalNodes_3DE324E4> | null;
+  additionalInstructions?: string | null;
+  systemInstructions?: string | null;
   createdBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedBy?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null);
   updatedAt: string;
   createdAt: string;
@@ -1439,15 +1432,25 @@ export interface PayloadLlmInstruction {
  * via the `definition` "admins_select".
  */
 export interface AdminsSelect<T extends boolean = true> {
-  figmaHandle?: T;
-  figmaImageUrl?: T;
-  userGroups?: T;
-  makePermission?: T;
-  email?: T;
   createdBy?: T;
   updatedBy?: T;
   updatedAt?: T;
   createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  resetPasswordRequestedAt?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
+  sessions?:
+    | T
+    | {
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1482,8 +1485,6 @@ export interface UsersSelect<T extends boolean = true> {
   salt?: T;
   hash?: T;
   resetPasswordRequestedAt?: T;
-  _verified?: T;
-  _verificationToken?: T;
   loginAttempts?: T;
   lockUntil?: T;
   sessions?:
@@ -1501,8 +1502,6 @@ export interface UsersSelect<T extends boolean = true> {
 export interface ProfileImagesSelect<T extends boolean = true> {
   alt?: T;
   owner?: T;
-  prefix?: T;
-  _objectKey?: T;
   createdBy?: T;
   updatedBy?: T;
   updatedAt?: T;
@@ -1952,8 +1951,6 @@ export interface MediaSelect<T extends boolean = true> {
   alt?: T;
   _h_folders?: T;
   _h_tags?: T;
-  prefix?: T;
-  _objectKey?: T;
   createdBy?: T;
   updatedBy?: T;
   updatedAt?: T;
@@ -2133,92 +2130,6 @@ export interface UploadDropzoneWidget {
  */
 export interface Auth {
   [k: string]: unknown;
-}
-
-/** @internal Core Lexical types — see @payloadcms/richtext-lexical. */
-export type LexicalElementFormat = 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-export type LexicalElementDirection = ('ltr' | 'rtl') | null;
-
-export interface SerializedLexicalElementBase<TChildren> {
-  children: TChildren[];
-  direction: LexicalElementDirection;
-  format: LexicalElementFormat;
-  indent: number;
-  textFormat?: number;
-  textStyle?: string;
-  /** @deprecated Ignored when loading. Typed as required only to match Lexical's types: rich text sent through the API, CLI or MCP may not contain it. */
-  version: number;
-}
-
-export type LexicalTextMode = 'normal' | 'token' | 'segmented';
-
-export interface SerializedTextNode {
-  type: 'text';
-  detail: number;
-  format: number;
-  mode: LexicalTextMode;
-  style: string;
-  text: string;
-  /** @deprecated Ignored when loading. Typed as required only to match Lexical's types: rich text sent through the API, CLI or MCP may not contain it. */
-  version: number;
-}
-
-export interface SerializedTabNode {
-  type: 'tab';
-  detail: number;
-  format: number;
-  mode: LexicalTextMode;
-  style: string;
-  text: string;
-  /** @deprecated Ignored when loading. Typed as required only to match Lexical's types: rich text sent through the API, CLI or MCP may not contain it. */
-  version: number;
-}
-
-export interface SerializedLineBreakNode {
-  type: 'linebreak';
-  /** @deprecated Ignored when loading. Typed as required only to match Lexical's types: rich text sent through the API, CLI or MCP may not contain it. */
-  version: number;
-}
-
-export interface SerializedParagraphNode<TChildren> extends SerializedLexicalElementBase<TChildren> {
-  type: 'paragraph';
-  textFormat: number;
-  textStyle: string;
-}
-
-export interface SerializedListNode<TChildren> extends SerializedLexicalElementBase<TChildren> {
-  type: 'list';
-  checked?: boolean;
-  listType: 'number' | 'bullet' | 'check';
-  start: number;
-  tag: 'ul' | 'ol';
-}
-
-export interface SerializedListItemNode<TChildren> extends SerializedLexicalElementBase<TChildren> {
-  type: 'listitem';
-  checked?: boolean;
-  value: number;
-}
-
-export interface SerializedHeadingNode<
-  TChildren,
-  TTag extends 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6',
-> extends SerializedLexicalElementBase<TChildren> {
-  type: 'heading';
-  tag: TTag;
-}
-
-/** Shape of a Lexical `richText` field. */
-export interface LexicalRichText<TNode> {
-  root: {
-    children: TNode[];
-    direction: LexicalElementDirection;
-    format: LexicalElementFormat;
-    indent: number;
-    type: 'root';
-    /** @deprecated Ignored when loading. Typed as required only to match Lexical's types: rich text sent through the API, CLI or MCP may not contain it. */
-    version: number;
-  };
 }
 
 

@@ -5,7 +5,7 @@ import {
   developmentVerificationAvailable,
   verifyDevelopmentTestAccount,
 } from '@/server/auth/development-verification'
-
+import type { DevelopmentVerificationPayload } from '@/server/auth/development-verification'
 export async function POST(request: Request) {
   if (!developmentVerificationAvailable(process.env)) {
     return Response.json(
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     const input = (await request.json()) as { email?: unknown }
     const payload = await getPayload({ config })
     const result = await verifyDevelopmentTestAccount({
-      payload,
+          payload: payload as unknown as DevelopmentVerificationPayload,
       email: typeof input.email === 'string' ? input.email : '',
       providedSecret: request.headers.get('x-solarshare-test-verification') || '',
     })

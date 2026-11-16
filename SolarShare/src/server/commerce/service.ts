@@ -24,10 +24,30 @@ import {
   type LocalPaymentStatus,
 } from './payment-reconciliation'
 
-const id = (value: unknown): string => {
-  if (typeof value === 'string') return value
-  if (value && typeof value === 'object' && 'id' in value) return String(value.id)
+const id = (value: unknown): number => {
+  if (typeof value === 'number' && Number.isSafeInteger(value)) {
+    return value
+  }
+
+  if (value && typeof value === 'object' && 'id' in value) {
+    const relatedID = value.id
+
+    if (typeof relatedID === 'number' && Number.isSafeInteger(relatedID)) {
+      return relatedID
+    }
+  }
+
   throw new Error('A required relationship is unavailable.')
+}
+
+const parseDocumentID = (value: string, label: string): number => {
+  const parsed = Number(value)
+
+  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+    throw new Error(`Invalid ${label}.`)
+  }
+
+  return parsed
 }
 
 const reference = (prefix: string) =>
@@ -37,7 +57,7 @@ const fullName = (user: User) => `${user.firstName} ${user.lastName}`.trim()
 
 async function createNotification(
   payload: Awaited<ReturnType<typeof getPayload>>,
-  owner: string,
+  owner: number,
   title: string,
   message: string,
   req?: Parameters<typeof payload.create>[0]['req'],
@@ -245,12 +265,13 @@ export async function reviewCustomerConnection(
 }
 
 export async function setEnergyTariff(owner: User, systemID: string, nairaPerKWh: number) {
+    const numericSystemID = parseDocumentID(systemID, 'system ID')
   requireAppRole(owner, 'solar-owner')
   if (!Number.isFinite(nairaPerKWh) || nairaPerKWh < 1) throw new Error('Invalid tariff.')
   const payload = await getPayload({ config })
   const system = await payload.findByID({
     collection: 'solar-systems',
-    id: systemID,
+    id: numericSystemID,
     depth: 0,
     user: owner,
     overrideAccess: false,
@@ -258,7 +279,12 @@ export async function setEnergyTariff(owner: User, systemID: string, nairaPerKWh
   if (id(system.owner) !== owner.id) throw new Error('Not authorized.')
   const current = await payload.find({
     collection: 'energy-tariffs',
-    where: { and: [{ system: { equals: systemID } }, { status: { equals: 'active' } }] },
+   where: {
+  and: [
+    { system: { equals: numericSystemID } },
+    { status: { equals: 'active' } },
+  ],
+},
     limit: 10,
     overrideAccess: true,
   })
@@ -275,7 +301,7 @@ export async function setEnergyTariff(owner: User, systemID: string, nairaPerKWh
     collection: 'energy-tariffs',
     data: {
       solarOwner: owner.id,
-      system: systemID,
+      system: numericSystemID,
       nairaPerKWh: Math.round(nairaPerKWh * 100) / 100,
       activeFrom: now,
       status: 'active',
@@ -292,6 +318,7 @@ export async function createEnergyPurchasePackage(
   description?: string,
 ) {
   requireAppRole(owner, 'solar-owner')
+  const numericSystemID = parseDocumentID(systemID, 'system ID')
   const cleanName = name.trim().slice(0, 80)
   const amountKobo = Math.round(amountNaira * 100)
   if (!cleanName) throw new Error('Package name is required.')
@@ -299,7 +326,7 @@ export async function createEnergyPurchasePackage(
   const payload = await getPayload({ config })
   const system = await payload.findByID({
     collection: 'solar-systems',
-    id: systemID,
+    id: numericSystemID,
     depth: 0,
     user: owner,
     overrideAccess: false,
@@ -327,11 +354,15 @@ export async function initializeEnergyPurchase(
   packageID?: string,
 ) {
   requireAppRole(customer, 'customer')
+    const numericRelationshipID = parseDocumentID(
+    relationshipID,
+    'relationship ID',
+  )
   if (!Number.isFinite(amountNaira)) throw new Error('Enter a valid amount.')
   const payload = await getPayload({ config })
   const relationship = await payload.findByID({
     collection: 'customer-relationships',
-    id: relationshipID,
+    id: numericRelationshipID,
     depth: 0,
     overrideAccess: true,
   })
@@ -349,11 +380,11 @@ export async function initializeEnergyPurchase(
   const tariff = tariffs.docs[0]
   if (!tariff) throw new Error('No active tariff is configured.')
   let amountKobo = Math.round(amountNaira * 100)
-  let purchasePackage: string | undefined
+  let purchasePackage: number | undefined
   if (packageID) {
     const selectedPackage = await payload.findByID({
       collection: 'energy-purchase-packages',
-      id: packageID,
+      id: parseDocumentID(packageID, 'package ID'),
       depth: 0,
       overrideAccess: true,
     })
@@ -397,12 +428,12 @@ export async function initializeEnergyPurchase(
       amountKobo,
       reference: paymentReference,
       callbackURL,
-      metadata: {
-        solarshareCustomerID: customer.id,
-        solarshareRelationshipID: relationship.id,
-        solarshareSystemID: id(relationship.system),
-        solarshareTariffNairaPerKWh: tariff.nairaPerKWh,
-      },
+     metadata: {
+  solarshareCustomerID: String(customer.id),
+  solarshareRelationshipID: String(relationship.id),
+  solarshareSystemID: String(id(relationship.system)),
+  solarshareTariffNairaPerKWh: tariff.nairaPerKWh,
+},
     })
     await payload.update({
       collection: 'payment-transactions',
@@ -463,10 +494,10 @@ export async function verifyAndRecordPayment(referenceValue: string) {
         reference: payment.reference,
         amountKobo: payment.amountKobo,
         currency: 'NGN',
-        customerID: id(payment.customer),
+        customerID: String(id(payment.customer)),
         customerEmail: customer.email,
-        relationshipID: id(payment.relationship),
-        systemID: id(payment.system),
+        relationshipID: String(id(payment.relationship)),
+        systemID: String(id(payment.system)),
         tariffNairaPerKWh: payment.tariffNairaPerKWh,
       },
       verification,

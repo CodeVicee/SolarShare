@@ -7,13 +7,21 @@ import { planConsumption } from './accounting'
 import { calculateConsumption } from './money'
 import { withPayloadTransaction } from './transaction'
 
-const id = (value: unknown) =>
-  typeof value === 'string'
-    ? value
-    : value && typeof value === 'object' && 'id' in value
-      ? String(value.id)
-      : ''
+const id = (value: unknown): number => {
+  if (typeof value === 'number' && Number.isSafeInteger(value)) {
+    return value
+  }
 
+  if (value && typeof value === 'object' && 'id' in value) {
+    const relatedID = value.id
+
+    if (typeof relatedID === 'number' && Number.isSafeInteger(relatedID)) {
+      return relatedID
+    }
+  }
+
+  throw new Error('A required relationship is unavailable.')
+}
 export type MeterReadingInput = {
   meterIdentifier: string
   cumulativeKWh: number

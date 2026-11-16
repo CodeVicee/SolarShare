@@ -79,7 +79,7 @@ describe('sharing and alert summaries', () => {
       { id: '1', direction: 'distributed', energyKWh: 2, status: 'completed' },
       { id: '2', direction: 'distributed', energyKWh: 10, status: 'proposed' },
       { id: '3', direction: 'received', energyKWh: 1.5, status: 'completed' },
-    ] as SharingRecord[]
+    ] as unknown as SharingRecord[]
 
     expect(summarizeSharing(records)).toEqual({
       completedAllocations: 2,

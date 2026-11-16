@@ -51,14 +51,14 @@ describe('API request validation', () => {
       parseSharingInput({
         direction: 'distributed',
         energyKWh: 3.25,
-        sourceSystem: 'system-1',
+        sourceSystem: 1,
         status: 'completed',
         source: 'utility-confirmed',
       }),
     ).toMatchObject({
       direction: 'distributed',
       energyKWh: 3.25,
-      sourceSystem: 'system-1',
+      sourceSystem: 1,
       status: 'proposed',
       source: 'coordination',
     })

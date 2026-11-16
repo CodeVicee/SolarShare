@@ -3,6 +3,7 @@ import { ownOwnerDocument, solarOwnerOnly } from './access'
 
 const accessArgs = (roles: Array<'solar-owner' | 'customer'>) =>
   ({
+    slug: 'users',
     req: {
       user: {
         id: 'app-user-id',
@@ -10,7 +11,7 @@ const accessArgs = (roles: Array<'solar-owner' | 'customer'>) =>
         roles,
       },
     },
-  }) as Parameters<typeof solarOwnerOnly>[0]
+ }) as unknown as Parameters<typeof solarOwnerOnly>[0]
 
 describe('solar owner collection access', () => {
   it('allows verified owner identities to create owner records', () => {

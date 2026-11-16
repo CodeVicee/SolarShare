@@ -130,7 +130,9 @@ export async function ingestTelemetry(
   const system = systems.docs[0]
   const receivedAt = new Date()
   const staleAfterSeconds = system.telemetryStaleAfterSeconds || 900
-  const keys = event.readings.map((reading) => telemetryDedupeKey(event, system.id, reading))
+ const keys = event.readings.map((reading) =>
+  telemetryDedupeKey(event, String(system.id), reading),
+)
   const existing = await payload.find({
     collection: 'energy-records',
     where: { dedupeKey: { in: keys } },

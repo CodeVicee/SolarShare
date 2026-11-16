@@ -94,7 +94,7 @@ export function shouldCreateAllocation(status: LocalPaymentStatus, allocationExi
   return status === 'successful' && !allocationExists
 }
 
-export function canReviewAllocation(ownerID: string, requestOwnerID: string, status: string) {
+export function canReviewAllocation(ownerID: number, requestOwnerID: number, status: string) {
   return ownerID === requestOwnerID && status === 'pending'
 }
 

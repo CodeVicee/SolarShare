@@ -15,6 +15,8 @@ import { TransactionalEmailError } from '@/lib/resend-email'
 import { authenticatePayloadUser } from '@/server/auth/login'
 import { lookupRegistrationCode, requestCustomerConnection } from '@/server/commerce/service'
 import type { User } from '@/payload-types'
+const emailVerificationEnabled =
+  process.env.EMAIL_VERIFICATION_ENABLED !== 'false'
 
 export type ActionState = {
   ok: boolean
@@ -99,7 +101,7 @@ const registrationIdentity = (formData: FormData) => {
 async function createRegistrationUser(
   payload: Awaited<ReturnType<typeof getPayload>>,
   input: ReturnType<typeof registrationIdentity>,
-  role: 'customer' | 'solar-owner-applicant',
+  role: 'customer' | 'solar-owner' | 'solar-owner-applicant',
 ) {
   try {
     const user = await payload.create({
@@ -179,16 +181,20 @@ export async function registerCustomerAction(
     const { user, deliveryFailure } = await createRegistrationUser(payload, input, 'customer')
     if (connectionCode) await requestCustomerConnection(user as User, connectionCode)
     return {
-      ok: true,
-      requiresVerification: true,
-      connectionRequested: Boolean(connectionCode),
-      message: verificationMessage(
+  ok: true,
+  requiresVerification: emailVerificationEnabled,
+  connectionRequested: Boolean(connectionCode),
+  message: emailVerificationEnabled
+    ? verificationMessage(
         deliveryFailure,
         connectionCode
           ? 'Your connection request is pending Solar Owner approval.'
           : 'You can connect to a Solar Owner after verification.',
-      ),
-    }
+      )
+    : connectionCode
+      ? 'Your account has been created. Your connection request is pending Solar Owner approval.'
+      : 'Your account has been created. You can now sign in.',
+}
   } catch (error) {
     console.error('[auth] registration failed before persistence', {
       reason: emailFailureReason(error),
@@ -244,9 +250,9 @@ export async function registerSolarOwnerAction(
     const { user, deliveryFailure } = await createRegistrationUser(
       payload,
       input,
-      'solar-owner-applicant',
+      'solar-owner',
     )
-    await payload.create({
+       await payload.create({
       collection: 'solar-owner-applications',
       data: {
         user: user.id,
@@ -260,19 +266,34 @@ export async function registerSolarOwnerAction(
         installationCapacityKW,
         batteryCapacityKWh,
         installationDetails,
-        status: 'pending',
+        status: 'approved',
       },
       draft: false,
       overrideAccess: true,
+      context: {
+        solarOwnerRegistration: true,
+      },
     })
+
+    await payload.create({
+      collection: 'solar-owner-profiles',
+      data: {
+        solarOwner: user.id,
+        displayName: input.fullName,
+        status: 'active',
+      },
+      overrideAccess: true,
+    })
+
     return {
       ok: true,
-      requiresVerification: true,
-      applicationPending: true,
-      message: verificationMessage(
-        deliveryFailure,
-        'Your Solar Owner application is pending administrator approval.',
-      ),
+      requiresVerification: emailVerificationEnabled,
+      message: emailVerificationEnabled
+        ? verificationMessage(
+            deliveryFailure,
+            'Your Solar Owner account has been approved. Verify your email to sign in.',
+          )
+        : 'Your Solar Owner account has been created and approved. You can now sign in.',
     }
   } catch (error) {
     console.error('[auth] owner application failed', { reason: emailFailureReason(error) })
@@ -485,7 +506,7 @@ export async function updateProfileAction(
 
   const payload = await getPayload({ config })
   const avatar = formData.get('avatar')
-  let avatarID: string | undefined
+ let avatarID: number | undefined
   if (avatar instanceof File && avatar.size > 0) {
     if (
       !['image/jpeg', 'image/png', 'image/webp'].includes(avatar.type) ||
@@ -515,7 +536,7 @@ export async function updateProfileAction(
       lastName,
       phone,
       theme: theme as 'system' | 'light' | 'dark',
-      ...(avatarID ? { avatar: avatarID } : {}),
+      ...(avatarID !== undefined ? { avatar: avatarID } : {}),
       notificationPreferences: {
         emailAlerts: formData.get('emailAlerts') === 'on',
         systemAlerts: formData.get('systemAlerts') === 'on',
