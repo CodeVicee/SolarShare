@@ -14,6 +14,8 @@ const allowedSections = new Set([
   'alerts',
   'energy',
   'payments',
+  'integration',
+  'esp32-monitor',
   'settings',
 ])
 

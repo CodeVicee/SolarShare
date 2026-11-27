@@ -20,6 +20,7 @@ import {
   Clock3,
   CloudSun,
   CreditCard,
+  Cpu,
   Eye,
   EyeOff,
   Factory,
@@ -71,6 +72,8 @@ import type { DashboardData } from '@/lib/dashboard-data'
 import { primaryAppRole } from '@/lib/account-roles'
 import ProfileSettings from '@/components/ProfileSettings'
 import EnergyManagement from '@/components/EnergyManagement'
+import DeviceIntegrationSettings from '@/components/DeviceIntegrationSettings'
+import ESP32MonitorPage from '@/components/ESP32MonitorPage'
 
 function ImageWithFallback({
   src,
@@ -1494,7 +1497,7 @@ function Landing() {
             </div>
           </div>
           <div className="flex flex-col justify-between gap-3 border-t border-white/10 pt-6 text-[9px] uppercase tracking-[.14em] text-white/30 sm:flex-row">
-            <span>© 2026 SolarShare. All rights reserved.</span>
+            <span>Â© 2026 SolarShare. All rights reserved.</span>
             <span>Prototype · Demonstration Data Only</span>
           </div>
         </div>
@@ -1525,6 +1528,8 @@ const navItems: Array<[string, string, LucideIcon]> = [
   ['payments', 'Payments & Revenue', CreditCard],
   ['energy', 'Energy Management', Zap],
   ['settings', 'System Settings', Settings],
+  ['integration', 'Device Integration', PlugZap],
+  ['esp32-monitor', 'ESP32 Monitor', Cpu],
 ]
 
 function ProtectedLayout({
@@ -1900,7 +1905,7 @@ function Dashboard() {
       <section className="mt-8 overflow-hidden border border-slate-200 bg-white">
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
           <p className="text-[10px] font-bold uppercase tracking-[.14em] text-slate-500">
-            Today’s energy overview
+            Todayâ€™s energy overview
           </p>
           <p className="font-mono text-[9px] text-slate-400">Updated 12 seconds ago</p>
         </div>
@@ -2197,7 +2202,7 @@ function SystemHealth() {
       <div className="grid grid-cols-2 border-b border-slate-100">
         <div className="border-r border-slate-100 p-5">
           <p className="text-[9px] uppercase tracking-wider text-slate-400">Inverter temp.</p>
-          <p className="mt-2 font-mono text-xl">36°C</p>
+          <p className="mt-2 font-mono text-xl">36Â°C</p>
         </div>
         <div className="p-5">
           <p className="text-[9px] uppercase tracking-wider text-slate-400">Battery health</p>
@@ -2299,6 +2304,9 @@ function LiveDashboard({ data, user: currentUser }: { data: DashboardData; user:
   const { user } = useAuth()
   const { theme } = useTheme()
   const snapshot = data.telemetry
+  const esp32Systems = data.systems.filter(
+    (system) => system.integrationAdapter === 'esp32-monitor',
+  )
   const chart = snapshot.powerHistory.map((record) => ({
     time: new Date(record.measuredAt).toLocaleString([], {
       month: 'short',
@@ -2463,6 +2471,173 @@ function LiveDashboard({ data, user: currentUser }: { data: DashboardData; user:
               </div>
             ))}
           </section>
+
+          {/* ESP32 ENERGY MONITOR WIDGETS */}
+          {esp32Systems.length > 0 && (
+            <section className="mt-8">
+              <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <p className="font-mono text-[9px] uppercase tracking-[.2em] text-[#1675DD]">
+                    Device telemetry
+                  </p>
+                  <h2 className="mt-2 text-lg font-semibold tracking-tight text-[#071426]">
+                    ESP32 Energy Monitor
+                  </h2>
+                  <p className="mt-1 text-[10px] text-slate-500">
+                    Latest gateway measurements · Informational data only
+                  </p>
+                </div>
+                <Link
+                  href="/app/esp32-monitor"
+                  className="text-[10px] font-semibold text-[#1675DD] transition hover:text-[#FF8A24]"
+                >
+                  Open full monitor →
+                </Link>
+              </div>
+
+              <div className="grid gap-5">
+                {esp32Systems.map((system) => {
+                  const reading = data.esp32Readings.find((item) => {
+                    const readingSystemId =
+                      typeof item.system === 'object' ? item.system.id : item.system
+
+                    return readingSystemId === system.id
+                  })
+
+                  return (
+                    <article
+                      key={system.id}
+                      className="overflow-hidden border border-slate-200 bg-white"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-5">
+                        <div>
+                          <h3 className="text-sm font-semibold text-[#071426]">
+                            {system.name}
+                          </h3>
+                          <p className="mt-1 font-mono text-[10px] text-slate-400">
+                            Gateway: {system.gatewayReference || 'Not specified'}
+                          </p>
+                        </div>
+
+                        {reading ? (
+                          <div className="flex flex-wrap gap-2">
+                            <span className="border border-slate-200 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-600">
+                              {reading.mode}
+                            </span>
+                            <span className="border border-amber-200 bg-amber-50 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-amber-700">
+                              {reading.quality}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="border border-slate-200 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                            Awaiting readings
+                          </span>
+                        )}
+                      </div>
+
+                      {reading ? (
+                        <>
+                          <div className="grid gap-3 p-4 md:grid-cols-2">
+                            {[
+                              {
+                                title: 'Load 1',
+                                voltage: reading.voltage1,
+                                current: reading.current1,
+                                power: reading.power1VA,
+                                relay: reading.relay1,
+                              },
+                              {
+                                title: 'Load 2',
+                                voltage: reading.voltage2,
+                                current: reading.current2,
+                                power: reading.power2VA,
+                                relay: reading.relay2,
+                              },
+                            ].map((load) => (
+                              <div
+                                key={load.title}
+                                className="border border-slate-100 bg-slate-50/60 p-4"
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <h4 className="text-xs font-semibold text-[#071426]">
+                                    {load.title}
+                                  </h4>
+                                  <span
+                                    className={`text-[9px] font-bold uppercase tracking-wider ${
+                                      typeof load.relay === 'boolean'
+                                        ? load.relay
+                                          ? 'text-emerald-600'
+                                          : 'text-slate-500'
+                                        : 'text-amber-600'
+                                    }`}
+                                  >
+                                    {typeof load.relay === 'boolean'
+                                      ? load.relay
+                                        ? 'Relay ON'
+                                        : 'Relay OFF'
+                                      : 'Relay unknown'}
+                                  </span>
+                                </div>
+
+                                <div className="mt-4 grid grid-cols-3 gap-2">
+                                  {[
+                                    ['Voltage', load.voltage, 'V'],
+                                    ['Current', load.current, 'A'],
+                                    ['Apparent power', load.power, 'VA'],
+                                  ].map(([label, value, unit]) => (
+                                    <div key={String(label)}>
+                                      <p className="text-[8px] uppercase tracking-wider text-slate-400">
+                                        {label}
+                                      </p>
+                                      <p className="mt-2 font-mono text-base text-[#071426]">
+                                        {typeof value === 'number'
+                                          ? value.toFixed(2)
+                                          : '—'}
+                                        <span className="ml-1 text-[9px] text-slate-400">
+                                          {unit}
+                                        </span>
+                                      </p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="flex flex-wrap justify-between gap-2 border-t border-slate-100 px-5 py-3 text-[9px] text-slate-400">
+                            <span>
+                              Measured {new Date(reading.measuredAt).toLocaleString()}
+                            </span>
+                            <span>
+                              Received {new Date(reading.receivedAt).toLocaleString()}
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="p-6">
+                          <p className="text-xs font-semibold text-[#071426]">
+                            No ESP32 readings received yet
+                          </p>
+                          <p className="mt-1 text-[10px] leading-5 text-slate-500">
+                            Measurements will appear here after this gateway sends
+                            its first accepted telemetry event.
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="border-t border-amber-100 bg-amber-50/60 px-5 py-3">
+                        <p className="text-[9px] leading-5 text-amber-800">
+                          These ESP32 measurements are unverified. Apparent power is
+                          shown in VA and is excluded from verified energy totals and billing.
+                        </p>
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
+            </section>
+          )}
+
           <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_360px]">
             <section className="border border-slate-200 bg-white p-6">
               <div>
@@ -2668,6 +2843,12 @@ function SectionPage({
     return <EnergyManagement user={currentUser} data={dashboardData.commerce} />
   }
   if (section === 'settings') return <ProfileSettings user={currentUser} />
+  if (section === 'esp32-monitor') {
+    return <ESP32MonitorPage readings={dashboardData.esp32Readings} />
+  }
+  if (section === 'integration') {
+    return <DeviceIntegrationSettings systems={dashboardData.systems} />
+  }
   return <DataSection section={section} data={dashboardData} />
 }
 

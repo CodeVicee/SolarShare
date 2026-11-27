@@ -1,0 +1,7 @@
+.vercel
+.env*
+*.bak
+SolarShare-before-backend-migration/
+
+SolarShare/inspect-approved-households.ts
+SolarShare/repair-missing-meter.ts

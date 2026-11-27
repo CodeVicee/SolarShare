@@ -203,6 +203,7 @@ export async function requestCustomerConnection(user: User, code: string) {
   return relationship
 }
 
+
 export async function reviewCustomerConnection(
   owner: User,
   relationshipID: string,
@@ -210,59 +211,121 @@ export async function reviewCustomerConnection(
   reason?: string,
 ) {
   requireAppRole(owner, 'solar-owner')
+
   const payload = await getPayload({ config })
-  const relationship = await payload.findByID({
-    collection: 'customer-relationships',
-    id: relationshipID,
-    depth: 0,
-    overrideAccess: true,
-  })
-  if (id(relationship.solarOwner) !== owner.id) throw new Error('Not authorized.')
-  const updated = await payload.update({
-    collection: 'customer-relationships',
-    id: relationship.id,
-    data: {
-      status: decision,
-      reviewedAt: new Date().toISOString(),
-      rejectionReason: decision === 'rejected' ? reason?.slice(0, 240) : undefined,
-    },
-    overrideAccess: true,
-  })
-  if (decision === 'approved') {
-    const wallets = await payload.find({
-      collection: 'energy-wallets',
-      where: { relationship: { equals: relationship.id } },
-      limit: 1,
-      overrideAccess: true,
-    })
-    if (!wallets.totalDocs) {
-      await payload.create({
-        collection: 'energy-wallets',
-        data: {
-          customer: id(relationship.customer),
-          solarOwner: owner.id,
-          relationship: relationship.id,
-          system: id(relationship.system),
-          balanceKWh: 0,
-          totalAllocatedKWh: 0,
-          totalConsumedKWh: 0,
-          lowBalanceThresholdKWh: 5,
-          version: 0,
-        },
+
+  const { updated, customerID } = await withPayloadTransaction(
+    payload,
+    owner,
+    async (req) => {
+      const relationship = await payload.findByID({
+        collection: 'customer-relationships',
+        id: relationshipID,
+        depth: 0,
+        req,
         overrideAccess: true,
       })
-    }
-  }
+
+      if (id(relationship.solarOwner) !== owner.id) {
+        throw new Error('Not authorized.')
+      }
+
+      const updated = await payload.update({
+        collection: 'customer-relationships',
+        id: relationship.id,
+        data: {
+          status: decision,
+          reviewedAt: new Date().toISOString(),
+          rejectionReason:
+            decision === 'rejected'
+              ? reason?.slice(0, 240)
+              : undefined,
+        },
+        req,
+        overrideAccess: true,
+      })
+
+      if (decision === 'approved') {
+        // Ensure the household meter registration exists.
+        const meters = await payload.find({
+          collection: 'meter-registrations',
+          where: {
+            relationship: { equals: relationship.id },
+          },
+          limit: 1,
+          req,
+          overrideAccess: true,
+        })
+
+        if (!meters.totalDocs) {
+          await payload.create({
+            collection: 'meter-registrations',
+            data: {
+              customer: id(relationship.customer),
+              solarOwner: owner.id,
+              relationship: relationship.id,
+              system: id(relationship.system),
+              meterIdentifier: `SSM-${randomBytes(12).toString('hex').toUpperCase()}`,
+              deviceChannel: 'unassigned',
+              status: 'pending',
+              source: 'not-configured',
+            },
+            req,
+            overrideAccess: true,
+          })
+        }
+
+        // Ensure the household energy wallet exists.
+        const wallets = await payload.find({
+          collection: 'energy-wallets',
+          where: {
+            relationship: { equals: relationship.id },
+          },
+          limit: 1,
+          req,
+          overrideAccess: true,
+        })
+
+        if (!wallets.totalDocs) {
+          await payload.create({
+            collection: 'energy-wallets',
+            data: {
+              customer: id(relationship.customer),
+              solarOwner: owner.id,
+              relationship: relationship.id,
+              system: id(relationship.system),
+              balanceKWh: 0,
+              totalAllocatedKWh: 0,
+              totalConsumedKWh: 0,
+              lowBalanceThresholdKWh: 5,
+              version: 0,
+            },
+            req,
+            overrideAccess: true,
+          })
+        }
+      }
+
+      return {
+        updated,
+        customerID: id(relationship.customer),
+      }
+    },
+  )
+
+  // Send notification after the database transaction succeeds.
   await createNotification(
     payload,
-    id(relationship.customer),
+    customerID,
     `Connection request ${decision}`,
     decision === 'approved'
       ? 'Your SolarShare connection request was approved.'
       : `Your connection status is now ${decision}.`,
   )
+
   return updated
 }
+
 
 export async function setEnergyTariff(owner: User, systemID: string, nairaPerKWh: number) {
     const numericSystemID = parseDocumentID(systemID, 'system ID')
@@ -504,11 +567,18 @@ export async function verifyAndRecordPayment(referenceValue: string) {
     )
   } catch (error) {
     if (payment.status !== 'successful') {
+      if (payment.status === 'reversed' || payment.status === 'refunded') return payment
       const mismatchChanged =
         payment.status !== 'failed' || payment.failureCode !== 'VERIFICATION_MISMATCH'
-      await payload.update({
+      const mismatchUpdate = await (payload.update as any)({
         collection: 'payment-transactions',
-        id: payment.id,
+        where: {
+          and: [
+            { id: { equals: payment.id } },
+            { status: { equals: payment.status } },
+          ],
+        },
+        limit: 1,
         data: {
           status: 'failed',
           providerStatus: verification.status,
@@ -518,7 +588,7 @@ export async function verifyAndRecordPayment(referenceValue: string) {
         },
         overrideAccess: true,
       })
-      if (mismatchChanged) {
+      if (mismatchUpdate.docs.length > 0 && mismatchChanged) {
         await createNotification(
           payload,
           id(payment.customer),
@@ -536,9 +606,15 @@ export async function verifyAndRecordPayment(referenceValue: string) {
   const resolvedStatus = resolvePaymentStatus(payment.status, providerStatus)
   if (resolvedStatus !== 'successful') {
     const previousStatus = payment.status
-    const updated = await payload.update({
+    const statusUpdate = await (payload.update as any)({
       collection: 'payment-transactions',
-      id: payment.id,
+      where: {
+        and: [
+          { id: { equals: payment.id } },
+          { status: { equals: previousStatus } },
+        ],
+      },
+      limit: 1,
       data: {
         status: resolvedStatus,
         providerReference: verification.reference,
@@ -553,6 +629,15 @@ export async function verifyAndRecordPayment(referenceValue: string) {
       depth: 0,
       overrideAccess: true,
     })
+    const updated = statusUpdate.docs[0]
+    if (!updated) {
+      return await payload.findByID({
+        collection: 'payment-transactions',
+        id: payment.id,
+        depth: 0,
+        overrideAccess: true,
+      })
+    }
     if (previousStatus !== resolvedStatus) {
       const statusTitle =
         resolvedStatus === 'reversed'
@@ -598,10 +683,19 @@ export async function verifyAndRecordPayment(referenceValue: string) {
       req,
       overrideAccess: true,
     })
+    if (fresh.status === 'reversed' || fresh.status === 'refunded') {
+      return fresh
+    }
     const verifiedAt = new Date().toISOString()
-    const updated = await payload.update({
+    const successUpdate = await (payload.update as any)({
       collection: 'payment-transactions',
-      id: fresh.id,
+      where: {
+        and: [
+          { id: { equals: fresh.id } },
+          { status: { equals: fresh.status } },
+        ],
+      },
+      limit: 1,
       data: {
         status: 'successful',
         verifiedAt: fresh.verifiedAt || verifiedAt,
@@ -618,6 +712,19 @@ export async function verifyAndRecordPayment(referenceValue: string) {
       req,
       overrideAccess: true,
     })
+    const updated = successUpdate.docs[0]
+    if (!updated) {
+      return await payload.findByID({
+        collection: 'payment-transactions',
+        id: fresh.id,
+        depth: 0,
+        req,
+        overrideAccess: true,
+      })
+    }
+    if (updated.status !== 'successful') {
+      return updated
+    }
     const existing = await payload.find({
       collection: 'energy-allocation-requests',
       where: { payment: { equals: fresh.id } },
@@ -660,8 +767,9 @@ export async function verifyAndRecordPayment(referenceValue: string) {
     return updated
   })
 
-  try {
-    const owner = await payload.findByID({
+  if (result.status === 'successful') {
+    try {
+      const owner = await payload.findByID({
       collection: 'users',
       id: id(result.solarOwner),
       overrideAccess: true,
@@ -671,8 +779,9 @@ export async function verifyAndRecordPayment(referenceValue: string) {
       subject: 'New SolarShare customer payment',
       html: `<p>A verified customer payment is awaiting allocation approval.</p><p>Customer: ${fullName(customer)}</p><p>Amount: ₦${(result.amountKobo / 100).toLocaleString('en-NG')}</p><p>Energy equivalent: ${result.energyKWh} kWh</p><p>Reference: ${result.reference}</p>`,
     })
-  } catch {
-    // Payment remains verified even when a secondary notification provider is unavailable.
+    } catch {
+      // Payment remains verified even when a secondary notification provider is unavailable.
+    }
   }
   return result
 }

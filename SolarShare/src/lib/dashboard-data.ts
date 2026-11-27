@@ -3,6 +3,7 @@ import 'server-only'
 import type {
   AppNotification,
   EnergyRecord,
+  Esp32MonitorReading,
   SharingRecord,
   SolarSystem,
   SystemAlert,
@@ -14,6 +15,7 @@ import type { getCommerceDashboard } from '@/server/commerce/service'
 import { hasAppRole } from '@/lib/account-roles'
 
 export type DashboardData = {
+  esp32Readings: Esp32MonitorReading[]
   systems: SolarSystem[]
   energy: EnergyRecord[]
   sharing: SharingRecord[]

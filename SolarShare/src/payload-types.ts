@@ -73,6 +73,7 @@ export interface Config {
     'profile-images': ProfileImage;
     'solar-systems': SolarSystem;
     'energy-records': EnergyRecord;
+    'esp32-monitor-readings': Esp32MonitorReading;
     'sharing-records': SharingRecord;
     'app-notifications': AppNotification;
     'system-alerts': SystemAlert;
@@ -107,6 +108,7 @@ export interface Config {
     'profile-images': ProfileImagesSelect<false> | ProfileImagesSelect<true>;
     'solar-systems': SolarSystemsSelect<false> | SolarSystemsSelect<true>;
     'energy-records': EnergyRecordsSelect<false> | EnergyRecordsSelect<true>;
+    'esp32-monitor-readings': Esp32MonitorReadingsSelect<false> | Esp32MonitorReadingsSelect<true>;
     'sharing-records': SharingRecordsSelect<false> | SharingRecordsSelect<true>;
     'app-notifications': AppNotificationsSelect<false> | AppNotificationsSelect<true>;
     'system-alerts': SystemAlertsSelect<false> | SystemAlertsSelect<true>;
@@ -360,7 +362,7 @@ export interface SolarSystem {
   panelModel?: string | null;
   inverterSerial?: string | null;
   gatewayReference?: string | null;
-  integrationAdapter?: ('not-configured' | 'generic-signed-webhook') | null;
+  integrationAdapter?: ('not-configured' | 'generic-signed-webhook' | 'esp32-monitor') | null;
   credentialStatus?: ('not-configured' | 'configured' | 'expired' | 'error') | null;
   operationalStatus?: ('pending' | 'connected' | 'offline' | 'maintenance' | 'decommissioned') | null;
   dataSource?: ('not-configured' | 'manual' | 'gateway' | 'utility' | 'import') | null;
@@ -420,6 +422,50 @@ export interface EnergyRecord {
   quality?: ('verified' | 'estimated' | 'unverified') | null;
   telemetryStatus?: ('live' | 'historical' | 'demo') | null;
   receivedAt?: string | null;
+  createdBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'users';
+        value: number | User;
+      } | null);
+  updatedBy?:
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'users';
+        value: number | User;
+      } | null);
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "esp32-monitor-readings".
+ */
+export interface Esp32MonitorReading {
+  id: number;
+  owner: number | User;
+  system: number | SolarSystem;
+  deviceReference: string;
+  eventId: string;
+  dedupeKey: string;
+  measuredAt: string;
+  voltage1?: number | null;
+  current1?: number | null;
+  power1VA?: number | null;
+  relay1?: boolean | null;
+  voltage2?: number | null;
+  current2?: number | null;
+  power2VA?: number | null;
+  relay2?: boolean | null;
+  mode: 'demo' | 'live';
+  quality: 'unverified' | 'estimated';
+  receivedAt: string;
   createdBy?:
     | ({
         relationTo: 'admins';
@@ -1041,6 +1087,7 @@ export interface MeterRegistration {
   relationship: number | CustomerRelationship;
   system: number | SolarSystem;
   meterIdentifier: string;
+  deviceChannel: 'unassigned' | 'channel-1' | 'channel-2';
   status: 'pending' | 'active' | 'suspended' | 'disconnected';
   source: 'not-configured' | 'smart-meter' | 'manual-audited';
   lastCumulativeKWh?: number | null;
@@ -1258,6 +1305,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'energy-records';
         value: number | EnergyRecord;
+      } | null)
+    | ({
+        relationTo: 'esp32-monitor-readings';
+        value: number | Esp32MonitorReading;
       } | null)
     | ({
         relationTo: 'sharing-records';
@@ -1590,6 +1641,33 @@ export interface EnergyRecordsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "esp32-monitor-readings_select".
+ */
+export interface Esp32MonitorReadingsSelect<T extends boolean = true> {
+  owner?: T;
+  system?: T;
+  deviceReference?: T;
+  eventId?: T;
+  dedupeKey?: T;
+  measuredAt?: T;
+  voltage1?: T;
+  current1?: T;
+  power1VA?: T;
+  relay1?: T;
+  voltage2?: T;
+  current2?: T;
+  power2VA?: T;
+  relay2?: T;
+  mode?: T;
+  quality?: T;
+  receivedAt?: T;
+  createdBy?: T;
+  updatedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "sharing-records_select".
  */
 export interface SharingRecordsSelect<T extends boolean = true> {
@@ -1894,6 +1972,7 @@ export interface MeterRegistrationsSelect<T extends boolean = true> {
   relationship?: T;
   system?: T;
   meterIdentifier?: T;
+  deviceChannel?: T;
   status?: T;
   source?: T;
   lastCumulativeKWh?: T;

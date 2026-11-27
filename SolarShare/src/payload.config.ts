@@ -5,6 +5,7 @@ import { postgresAdapter } from '@payloadcms/db-postgres'
 import { mcpPlugin } from '@payloadcms/plugin-mcp'
 import { en as adminLanguage } from '@payloadcms/translations/languages/en'
 import { fileURLToPath } from 'url'
+import { ESP32MonitorReadings } from './collections/ESP32MonitorReadings'
 
 import { Admins } from './collections/Admins'
 import { Media } from './collections/Media'
@@ -85,6 +86,7 @@ export default buildConfig({
     ProfileImages,
     SolarSystems,
     EnergyRecords,
+    ESP32MonitorReadings,
     SharingRecords,
     AppNotifications,
     SystemAlerts,

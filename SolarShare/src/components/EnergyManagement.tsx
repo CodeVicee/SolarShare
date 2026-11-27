@@ -62,6 +62,12 @@ export default function EnergyManagement({
   const [rejectionReasons, setRejectionReasons] = useState<Record<string, string>>({})
   const isOwner = user.roles.includes('solar-owner')
   const ownerRelationships = data.relationships.filter((item) => id(item.solarOwner) === user.id)
+  const connectedHouseholds = ownerRelationships.filter(
+  (relationship) => relationship.status === 'approved',
+)
+const pendingConnections = ownerRelationships.filter(
+  (relationship) => relationship.status === 'pending',
+)
   const customerRelationships = data.relationships.filter((item) => id(item.customer) === user.id)
   const approved = customerRelationships.find((item) => item.status === 'approved')
  const wallet = data.wallets.find(
@@ -225,7 +231,7 @@ export default function EnergyManagement({
             </section>
             <section className="border border-slate-200 bg-white p-6">
               <h2 className="text-sm font-semibold">Customer requests</h2>
-              {ownerRelationships.map((relationship) => (
+              {pendingConnections.map((relationship) => (
                 <div
                   key={relationship.id}
                   className="mt-4 flex items-center justify-between border border-slate-200 p-4"
@@ -273,11 +279,118 @@ export default function EnergyManagement({
                   )}
                 </div>
               ))}
-              {!ownerRelationships.length && (
+              {!pendingConnections.length && (
                 <p className="mt-5 text-xs text-slate-500">No requests yet.</p>
               )}
-            </section>
+                        </section>
           </div>
+
+          <section className="mt-6 border border-slate-200 bg-white p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-semibold">Connected households</h2>
+                <p className="mt-1 text-xs text-slate-500">
+                  Approved customers and their registered energy meters.
+                </p>
+              </div>
+              <span className="font-mono text-xs text-slate-500">
+                {connectedHouseholds.length} connected
+              </span>
+            </div>
+
+            {connectedHouseholds.length > 0 ? (
+              <div className="mt-5 grid gap-4 md:grid-cols-2">
+                {connectedHouseholds.map((relationship) => {
+                  const meter = data.meters.find(
+                    (item) => id(item.relationship) === String(relationship.id),
+                  )
+                  const system = data.systems.find(
+                    (item) => id(item.id) === id(relationship.system),
+                  )
+
+                  return (
+                    <article
+                      key={relationship.id}
+                      className="border border-slate-200 p-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold">
+                            {name(relationship.customer)}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-500">
+                            {system?.name || 'Solar system'}
+                          </p>
+                        </div>
+                        <span className="bg-emerald-50 px-2 py-1 text-[9px] font-bold uppercase text-emerald-700">
+                          Approved
+                        </span>
+                      </div>
+
+                      {meter ? (
+                        <div className="mt-4 grid grid-cols-2 gap-3">
+                          <div>
+                            <p className="text-[9px] uppercase text-slate-400">
+                              Meter ID
+                            </p>
+                            <p className="mt-1 break-all font-mono text-xs">
+                              {meter.meterIdentifier}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-[9px] uppercase text-slate-400">
+                              Channel
+                            </p>
+                            <p className="mt-1 text-xs font-semibold">
+                              {meter.deviceChannel === 'unassigned'
+                                ? 'Unassigned'
+                                : meter.deviceChannel}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-[9px] uppercase text-slate-400">
+                              Meter status
+                            </p>
+                            <p className="mt-1 text-xs font-semibold">
+                              {meter.status}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-[9px] uppercase text-slate-400">
+                              Source
+                            </p>
+                            <p className="mt-1 text-xs font-semibold">
+                              {meter.source}
+                            </p>
+                          </div>
+                          <div className="col-span-2">
+                            <p className="text-[9px] uppercase text-slate-400">
+                              Last cumulative reading
+                            </p>
+                            <p className="mt-1 text-xs font-semibold">
+                              {meter.lastCumulativeKWh == null
+                                ? 'No reading recorded'
+                                : `${meter.lastCumulativeKWh.toLocaleString('en-NG')} kWh`}
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="mt-4 border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                          This household is approved, but its meter registration has
+                          not been created yet.
+                        </p>
+                      )}
+                    </article>
+                  )
+                })}
+              </div>
+            ) : (
+              <p className="mt-5 text-xs text-slate-500">
+                No approved households are connected yet.
+              </p>
+            )}
+          </section>
+
           <div className="mt-6 grid gap-6 xl:grid-cols-[.8fr_1.2fr]">
             <section className="border border-slate-200 bg-white p-6">
               <Package className="h-5 w-5 text-[#1675DD]" />

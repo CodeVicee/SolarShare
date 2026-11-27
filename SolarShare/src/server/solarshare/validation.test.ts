@@ -3,10 +3,39 @@ import {
   InputError,
   paginationFromURL,
   parseSharingInput,
+  parseSolarIntegrationInput,
   parseSolarSystemInput,
 } from './validation'
 
 describe('API request validation', () => {
+  it('accepts ESP32 integration with a gateway reference', () => {
+    expect(
+      parseSolarIntegrationInput({
+        integrationAdapter: 'esp32-monitor',
+        gatewayReference: 'SOLAR-ESP32-001',
+      }),
+    ).toMatchObject({
+      integrationAdapter: 'esp32-monitor',
+      gatewayReference: 'SOLAR-ESP32-001',
+    })
+  })
+
+  it('rejects ESP32 integration without a gateway reference', () => {
+    expect(() =>
+      parseSolarIntegrationInput({
+        integrationAdapter: 'esp32-monitor',
+      }),
+    ).toThrow(InputError)
+  })
+
+  it('rejects unsupported telemetry adapters', () => {
+    expect(() =>
+      parseSolarIntegrationInput({
+        integrationAdapter: 'unknown-adapter',
+        gatewayReference: 'SOLAR-ESP32-001',
+      }),
+    ).toThrow(InputError)
+  })
   it('allowlists solar-system fields and normalizes numeric capacity', () => {
     expect(
       parseSolarSystemInput({

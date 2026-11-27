@@ -1,3 +1,4 @@
+
 import 'server-only'
 
 import config from '@payload-config'
@@ -18,17 +19,30 @@ import {
   parseSolarSystemInput,
 } from './validation'
 import { buildTelemetrySnapshot } from '@/server/telemetry/snapshot'
-import { getCommerceDashboard } from '@/server/commerce/service'
-import { ensureOwnerSetup } from '@/server/commerce/service'
+import {
+  getCommerceDashboard,
+  ensureOwnerSetup,
+} from '@/server/commerce/service'
 import { requireAppRole } from '@/lib/account-roles'
 
-const ownerWhere = (user: User): Where => ({ owner: { equals: user.id } })
+const ownerWhere = (user: User): Where => ({
+  owner: { equals: user.id },
+})
 
 export async function getOwnedDashboardData(user: User) {
   requireAppRole(user, 'solar-owner')
+
   const payload = await getPayload({ config })
   const owner = ownerWhere(user)
-  const [systems, energy, sharing, notifications, alerts] = await Promise.all([
+
+  const [
+    systems,
+    energy,
+    sharing,
+    notifications,
+    alerts,
+    esp32Readings,
+  ] = await Promise.all([
     payload.find({
       collection: 'solar-systems',
       where: owner,
@@ -74,6 +88,15 @@ export async function getOwnedDashboardData(user: User) {
       user,
       overrideAccess: false,
     }),
+    payload.find({
+      collection: 'esp32-monitor-readings',
+      where: owner,
+      limit: 50,
+      sort: '-measuredAt',
+      depth: 0,
+      user,
+      overrideAccess: false,
+    }),
   ])
 
   const result = {
@@ -82,7 +105,9 @@ export async function getOwnedDashboardData(user: User) {
     sharing: sharing.docs,
     notifications: notifications.docs,
     alerts: alerts.docs,
+    esp32Readings: esp32Readings.docs,
   }
+
   return {
     ...result,
     telemetry: buildTelemetrySnapshot(result.systems, result.energy),
@@ -92,7 +117,9 @@ export async function getOwnedDashboardData(user: User) {
 
 export async function getCustomerDashboardData(user: User) {
   requireAppRole(user, 'customer')
+
   const payload = await getPayload({ config })
+
   const notifications = await payload.find({
     collection: 'app-notifications',
     where: ownerWhere(user),
@@ -102,13 +129,16 @@ export async function getCustomerDashboardData(user: User) {
     user,
     overrideAccess: false,
   })
+
   const result = {
     systems: [],
     energy: [],
     sharing: [],
     notifications: notifications.docs,
     alerts: [],
+    esp32Readings: [],
   }
+
   return {
     ...result,
     telemetry: buildTelemetrySnapshot([], []),
@@ -119,11 +149,19 @@ export async function getCustomerDashboardData(user: User) {
 export async function getOwnedResource(
   user: User,
   resource: string,
-  options: { limit: number; page: number; from?: string; to?: string; kind?: string },
+  options: {
+    limit: number
+    page: number
+    from?: string
+    to?: string
+    kind?: string
+  },
 ) {
   requireAppRole(user, 'solar-owner')
+
   const payload = await getPayload({ config })
   const owner = ownerWhere(user)
+
   const common = {
     depth: 0 as const,
     limit: options.limit,
@@ -140,11 +178,28 @@ export async function getOwnedResource(
         where: owner,
         sort: '-updatedAt',
       })
+
     case 'energy-readings': {
       const conditions: Where[] = [owner]
-      if (options.from) conditions.push({ recordedAt: { greater_than_equal: options.from } })
-      if (options.to) conditions.push({ recordedAt: { less_than_equal: options.to } })
-      if (options.kind) conditions.push({ kind: { equals: options.kind } })
+
+      if (options.from) {
+        conditions.push({
+          recordedAt: { greater_than_equal: options.from },
+        })
+      }
+
+      if (options.to) {
+        conditions.push({
+          recordedAt: { less_than_equal: options.to },
+        })
+      }
+
+      if (options.kind) {
+        conditions.push({
+          kind: { equals: options.kind },
+        })
+      }
+
       return payload.find({
         ...common,
         collection: 'energy-records',
@@ -152,6 +207,7 @@ export async function getOwnedResource(
         sort: '-recordedAt',
       })
     }
+
     case 'sharing':
       return payload.find({
         ...common,
@@ -159,6 +215,7 @@ export async function getOwnedResource(
         where: owner,
         sort: '-recordedAt',
       })
+
     case 'notifications':
       return payload.find({
         ...common,
@@ -166,6 +223,7 @@ export async function getOwnedResource(
         where: owner,
         sort: '-createdAt',
       })
+
     case 'system-alerts':
       return payload.find({
         ...common,
@@ -173,6 +231,7 @@ export async function getOwnedResource(
         where: owner,
         sort: '-detectedAt',
       })
+
     default:
       return null
   }
@@ -180,13 +239,19 @@ export async function getOwnedResource(
 
 export async function getOwnedAnalytics(
   user: User,
-  options: { period: AnalyticsPeriod; from?: string; to?: string },
+  options: {
+    period: AnalyticsPeriod
+    from?: string
+    to?: string
+  },
 ) {
   requireAppRole(user, 'solar-owner')
+
   const payload = await getPayload({ config })
   const window = analyticsDateWindow(options.period)
   const from = options.from || window.from
   const to = options.to || window.to
+
   const [energy, sharing, alerts] = await Promise.all([
     payload.find({
       collection: 'energy-records',
@@ -223,6 +288,7 @@ export async function getOwnedAnalytics(
       overrideAccess: false,
     }),
   ])
+
   return {
     period: options.period,
     from,
@@ -234,9 +300,14 @@ export async function getOwnedAnalytics(
   }
 }
 
-export async function createOwnedSolarSystem(user: User, input: unknown) {
+export async function createOwnedSolarSystem(
+  user: User,
+  input: unknown,
+) {
   requireAppRole(user, 'solar-owner')
+
   const payload = await getPayload({ config })
+
   const system = await payload.create({
     collection: 'solar-systems',
     data: {
@@ -249,13 +320,20 @@ export async function createOwnedSolarSystem(user: User, input: unknown) {
     user,
     overrideAccess: false,
   })
+
   await ensureOwnerSetup(user, system)
+
   return system
 }
 
-export async function createOwnedSharingAllocation(user: User, input: unknown) {
+export async function createOwnedSharingAllocation(
+  user: User,
+  input: unknown,
+) {
   requireAppRole(user, 'solar-owner')
+
   const payload = await getPayload({ config })
+
   return payload.create({
     collection: 'sharing-records',
     data: {
@@ -269,9 +347,15 @@ export async function createOwnedSharingAllocation(user: User, input: unknown) {
   })
 }
 
-export async function updateOwnedSolarIntegration(user: User, id: string, input: unknown) {
+export async function updateOwnedSolarIntegration(
+  user: User,
+  id: string,
+  input: unknown,
+) {
   requireAppRole(user, 'solar-owner')
+
   const payload = await getPayload({ config })
+
   return payload.update({
     collection: 'solar-systems',
     id,

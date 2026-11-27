@@ -43,7 +43,30 @@ export function parseSolarSystemInput(input: unknown) {
   const locationLabel = text(record.locationLabel, 160)
   const capacityKW = finiteNumber(record.capacityKW)
   const batteryCapacityKWh = finiteNumber(record.batteryCapacityKWh)
+  const gatewayReference = text(record.gatewayReference, 128)
+  const requestedAdapter = record.integrationAdapter
+  const integrationAdapter =
+    requestedAdapter === 'generic-signed-webhook'
+      ? ('generic-signed-webhook' as const)
+      : requestedAdapter === 'esp32-monitor'
+        ? ('esp32-monitor' as const)
+        : requestedAdapter === undefined || requestedAdapter === null ||
+            requestedAdapter === '' || requestedAdapter === 'not-configured'
+          ? ('not-configured' as const)
+          : undefined
   const errors: Record<string, string> = {}
+
+  if (!integrationAdapter) {
+    errors.integrationAdapter = 'Select a supported telemetry adapter.'
+  }
+
+  if (
+    integrationAdapter !== 'not-configured' &&
+    integrationAdapter !== undefined &&
+    !gatewayReference
+  ) {
+    errors.gatewayReference = 'Enter the gateway system reference.'
+  }
 
   if (name.length < 2) errors.name = 'Enter an installation name.'
   if (locationLabel.length < 5) errors.locationLabel = 'Enter the installation address.'
@@ -68,11 +91,8 @@ export function parseSolarSystemInput(input: unknown) {
         : {
             capacityKWh: batteryCapacityKWh,
           },
-    gatewayReference: text(record.gatewayReference, 128) || undefined,
-    integrationAdapter:
-      record.integrationAdapter === 'generic-signed-webhook'
-        ? ('generic-signed-webhook' as const)
-        : ('not-configured' as const),
+    gatewayReference: gatewayReference || undefined,
+    integrationAdapter: integrationAdapter!,
     telemetryStaleAfterSeconds:
       finiteNumber(record.telemetryStaleAfterSeconds) === undefined
         ? undefined
@@ -87,13 +107,19 @@ export function parseSolarIntegrationInput(input: unknown) {
   const integrationAdapter =
     record.integrationAdapter === 'generic-signed-webhook'
       ? ('generic-signed-webhook' as const)
-      : record.integrationAdapter === 'not-configured'
-        ? ('not-configured' as const)
-        : undefined
+      : record.integrationAdapter === 'esp32-monitor'
+        ? ('esp32-monitor' as const)
+        : record.integrationAdapter === 'not-configured'
+          ? ('not-configured' as const)
+          : undefined
   const stale = finiteNumber(record.telemetryStaleAfterSeconds)
   const errors: Record<string, string> = {}
   if (!integrationAdapter) errors.integrationAdapter = 'Select a supported telemetry adapter.'
-  if (integrationAdapter === 'generic-signed-webhook' && !gatewayReference) {
+  if (
+    integrationAdapter !== 'not-configured' &&
+    integrationAdapter !== undefined &&
+    !gatewayReference
+  ) {
     errors.gatewayReference = 'Enter the gateway system reference.'
   }
   if (stale !== undefined && (stale < 60 || stale > 86_400)) {

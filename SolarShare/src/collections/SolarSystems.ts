@@ -41,7 +41,7 @@ export const SolarSystems: CollectionConfig = {
       type: 'select',
       defaultValue: 'not-configured',
       index: true,
-      options: ['not-configured', 'generic-signed-webhook'],
+      options: ['not-configured', 'generic-signed-webhook', 'esp32-monitor'],
     },
     {
       name: 'credentialStatus',
